@@ -16,6 +16,7 @@ namespace MultiThreading.Task2.Chaining
         const int Capacity = 10;
         const int MinNumber = 1;
         const int MaxNumber = 100;
+        const int MinMultiplier = 2;
         const int MaxMultiplier = 3;
 
         static void Main(string[] args)
@@ -39,13 +40,13 @@ namespace MultiThreading.Task2.Chaining
             var task1 = Task.Run(GenerateNumbers);
             var outputTask = task1.ContinueWith((task) => Output("Initial array:", task.Result));
             outputTask.Wait();
-            var task2 = task1.ContinueWith((task) => MultiplyNumbersRandom(task.Result));
-            outputTask = task2.ContinueWith((task) => Output("Multiplied array:", task.Result));
+            var task2 = task1.ContinueWith((task, state) => MultiplyNumbersRandom((int[])state), task1.Result);
+            outputTask = task2.ContinueWith((task) => Output("Multiplied array:", (int[])task.AsyncState));
             outputTask.Wait();
-            var task3 = task2.ContinueWith((task) => SortNumbers(task.Result));
-            outputTask = task3.ContinueWith((task) => Output("Sorted array:", task.Result));
+            var task3 = task2.ContinueWith((task, state) => SortNumbers((int[])state), task2.AsyncState);
+            outputTask = task3.ContinueWith((task) => Output("Sorted array:", (int[])task.AsyncState));
             outputTask.Wait();
-            var task4 = task3.ContinueWith(task => GetAverage(task.Result));
+            var task4 = task3.ContinueWith(task => GetAverage((int[])task.AsyncState));
             outputTask = task4.ContinueWith((task) => Output("Average is:", task.Result));
             outputTask.Wait();
         }
@@ -63,23 +64,19 @@ namespace MultiThreading.Task2.Chaining
             return numbers;
         }
 
-        static int[] MultiplyNumbersRandom(int[] numbers)
+        static void MultiplyNumbersRandom(int[] numbers)
         {
             var random = new Random();
-            var multiplier = random.Next(MaxMultiplier);
+            var multiplier = random.Next(MinMultiplier, MaxMultiplier);
             for (int i = 0; i < numbers.Length; i++)
             {
                 numbers[i] *= multiplier;
             }
-
-            return numbers;
         }
 
-        static int[] SortNumbers(int[] numbers)
+        static void SortNumbers(int[] numbers)
         {
             Array.Sort(numbers);
-
-            return numbers;
         }
 
         static double GetAverage(int[] numbers)
