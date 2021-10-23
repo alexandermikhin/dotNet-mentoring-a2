@@ -6,11 +6,18 @@
  * Fourth Task – calculates the average value. All this tasks should print the values to console.
  */
 using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MultiThreading.Task2.Chaining
 {
     class Program
     {
+        const int Capacity = 10;
+        const int MinNumber = 1;
+        const int MaxNumber = 100;
+        const int MaxMultiplier = 3;
+
         static void Main(string[] args)
         {
             Console.WriteLine(".Net Mentoring Program. MultiThreading V1 ");
@@ -22,8 +29,68 @@ namespace MultiThreading.Task2.Chaining
             Console.WriteLine();
 
             // feel free to add your code
+            ExecuteTask();
 
             Console.ReadLine();
+        }
+
+        static void ExecuteTask()
+        {
+            var task1 = Task.Run(GenerateNumbers);
+            var outputTask = task1.ContinueWith((task) => Output("Initial array:", task.Result));
+            outputTask.Wait();
+            var task2 = task1.ContinueWith((task) => MultiplyNumbersRandom(task.Result));
+            outputTask = task2.ContinueWith((task) => Output("Multiplied array:", task.Result));
+            outputTask.Wait();
+            var task3 = task2.ContinueWith((task) => SortNumbers(task.Result));
+            outputTask = task3.ContinueWith((task) => Output("Sorted array:", task.Result));
+            outputTask.Wait();
+            var task4 = task3.ContinueWith(task => GetAverage(task.Result));
+            outputTask = task4.ContinueWith((task) => Output("Average is:", task.Result));
+            outputTask.Wait();
+        }
+
+        static int[] GenerateNumbers()
+        {
+            var numbers = new int[Capacity];
+            var random = new Random();
+
+            for (int i = 0; i < Capacity; i++)
+            {
+                numbers[i] = random.Next(MinNumber, MaxNumber);
+            }
+
+            return numbers;
+        }
+
+        static int[] MultiplyNumbersRandom(int[] numbers)
+        {
+            var random = new Random();
+            var multiplier = random.Next(MaxMultiplier);
+            for (int i = 0; i < numbers.Length; i++)
+            {
+                numbers[i] *= multiplier;
+            }
+
+            return numbers;
+        }
+
+        static int[] SortNumbers(int[] numbers)
+        {
+            Array.Sort(numbers);
+
+            return numbers;
+        }
+
+        static double GetAverage(int[] numbers)
+        {
+            return numbers.Average();
+        }
+
+        static void Output<T>(string title, params T[] numbers)
+        {
+            Console.WriteLine(title);
+            Console.WriteLine(string.Join(' ', numbers));
         }
     }
 }
