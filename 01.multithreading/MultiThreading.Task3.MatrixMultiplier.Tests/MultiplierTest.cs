@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MultiThreading.Task3.MatrixMultiplier.Matrices;
 using MultiThreading.Task3.MatrixMultiplier.Multipliers;
@@ -18,8 +19,32 @@ namespace MultiThreading.Task3.MatrixMultiplier.Tests
         [TestMethod]
         public void ParallelEfficiencyTest()
         {
-            // todo: implement a test method to check the size of the matrix which makes parallel multiplication more effective than
-            // todo: the regular one
+            const int maxSize = 1000;
+            var multiplier = new MatricesMultiplier();
+            var parallelMultiplier = new MatricesMultiplierParallel();
+            var stopWatch = new Stopwatch();
+            var isFaster = false;
+            for (int i = 1; i <= maxSize; i++)
+            {
+                var firstMatrix = CreateMatrix(i);
+                var secondMatrix = CreateMatrix(i);
+
+                stopWatch.Start();
+                multiplier.Multiply(firstMatrix, secondMatrix);
+                var ellapsedSecondsLinear = stopWatch.ElapsedMilliseconds;
+                stopWatch.Restart();
+                parallelMultiplier.Multiply(firstMatrix, secondMatrix);
+                var ellapsedSecondsParallel = stopWatch.ElapsedMilliseconds;
+                stopWatch.Reset();
+                if (ellapsedSecondsParallel < ellapsedSecondsLinear)
+                {
+                    isFaster = true;
+                    Console.WriteLine("Parallel execution became faster then linear execution when matrix size is " + i);
+                    break;
+                }
+            }
+
+            Assert.IsTrue(isFaster, "Linear execution is faster for matrices up to " + maxSize);
         }
 
         #region private methods
@@ -69,6 +94,31 @@ namespace MultiThreading.Task3.MatrixMultiplier.Tests
             Assert.AreEqual(109, multiplied.GetElement(2, 0));
             Assert.AreEqual(213, multiplied.GetElement(2, 1));
             Assert.AreEqual(728, multiplied.GetElement(2, 2));
+        }
+
+        private IMatrix CreateMatrix(long size)
+        {
+            var resultMatrix = new Matrix(size, size);
+            for (long i = 0; i < size; i++)
+            {
+                for (long j = 0; j < size; j++)
+                {
+                    resultMatrix.SetElement(i, j, (i + 1) * (j + 1));
+                }
+            }
+
+            return resultMatrix;
+        }
+
+        private void compareMatrices(IMatrix a, IMatrix b)
+        {
+            for (long i = 0; i < a.RowCount; i++)
+            {
+                for (long j = 0; j < a.ColCount; j++)
+                {
+                    Assert.AreEqual(a.GetElement(i, j), b.GetElement(i, j));
+                }
+            }
         }
 
         #endregion
