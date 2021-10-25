@@ -47,7 +47,7 @@ namespace MultiThreading.Task6.Continuation
             var task = Task.Factory.StartNew(() => MainTaskThread(cancellationTokenSource.Token), cancellationTokenSource.Token);
             var taskA = task.ContinueWith(t => TaskAThread(), TaskContinuationOptions.None);
             var taskB = task.ContinueWith(t => TaskBThread(), TaskContinuationOptions.OnlyOnFaulted);
-            var taskC = task.ContinueWith(t => TaskCThread(), TaskContinuationOptions.OnlyOnFaulted);
+            var taskC = task.ContinueWith(t => TaskCThread(), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
             var taskD = task.ContinueWith(t => TaskDThread(), TaskContinuationOptions.OnlyOnCanceled);
 
             taskA.Wait();
