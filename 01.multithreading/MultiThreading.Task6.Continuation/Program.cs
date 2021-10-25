@@ -48,7 +48,7 @@ namespace MultiThreading.Task6.Continuation
             var taskA = task.ContinueWith(t => TaskAThread(), TaskContinuationOptions.None);
             var taskB = task.ContinueWith(t => TaskBThread(), TaskContinuationOptions.OnlyOnFaulted);
             var taskC = task.ContinueWith(t => TaskCThread(), TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
-            var taskD = task.ContinueWith(t => TaskDThread(), TaskContinuationOptions.OnlyOnCanceled);
+            var taskD = task.ContinueWith(t => TaskDThread(), TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.LongRunning);
 
             taskA.Wait();
         }
