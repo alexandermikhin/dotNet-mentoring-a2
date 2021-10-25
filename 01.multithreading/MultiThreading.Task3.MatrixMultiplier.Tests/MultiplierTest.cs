@@ -110,17 +110,6 @@ namespace MultiThreading.Task3.MatrixMultiplier.Tests
             return resultMatrix;
         }
 
-        private void compareMatrices(IMatrix a, IMatrix b)
-        {
-            for (long i = 0; i < a.RowCount; i++)
-            {
-                for (long j = 0; j < a.ColCount; j++)
-                {
-                    Assert.AreEqual(a.GetElement(i, j), b.GetElement(i, j));
-                }
-            }
-        }
-
         #endregion
     }
 }
