@@ -14,10 +14,11 @@ namespace Chat.Client
     {
         readonly MessagesRepository messagesRepository;
         readonly Random random = new Random();
-        readonly int minDelay = 500;
-        readonly int maxDelay = 1000;
+        readonly int minDelay = 100;
+        readonly int maxDelay = 3000;
         readonly int port = 12000;
         readonly string address = "127.0.0.1";
+        NetworkStream stream;
 
         public Client(MessagesRepository messagesRepository)
         {
@@ -41,27 +42,10 @@ namespace Chat.Client
             try
             {
                 client = new TcpClient(address, port);
-                NetworkStream stream = client.GetStream();
-                while (!token.IsCancellationRequested)
-                {
-                    var delay = random.Next(minDelay, maxDelay);
-                    Thread.Sleep(delay);
-                    var message = messagesRepository.GetMessage();
-                    Console.WriteLine(message);
-                    byte[] data = Encoding.Unicode.GetBytes(message);
-                    stream.Write(data, 0, data.Length);
-                    data = new byte[256];
-                    var builder = new StringBuilder();
-
-                    do
-                    {
-                        int bytes = stream.Read(data, 0, data.Length);
-                        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
-                    }
-                    while (stream.DataAvailable);
-                    message = builder.ToString() + " <";
-                    Console.WriteLine(message.PadLeft(80, ' '));
-                }
+                stream = client.GetStream();
+                var readTask = Task.Factory.StartNew(() => ReadTask(token), token);
+                var writeTask = Task.Factory.StartNew(() => WriteTask(token), token);
+                Task.WaitAll(readTask, writeTask);
             }
             catch (Exception ex)
             {
@@ -69,6 +53,11 @@ namespace Chat.Client
             }
             finally
             {
+                if (stream != null)
+                {
+                    stream.Close();
+                }
+
                 if (client != null)
                 {
                     client.Close();
@@ -85,6 +74,49 @@ namespace Chat.Client
             }
             while (keyInfo.KeyChar != 'x');
             source.Cancel();
+        }
+
+        private void ReadTask(CancellationToken token)
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    byte[] data = new byte[256];
+                    var builder = new StringBuilder();
+                    while (stream.DataAvailable)
+                    {
+                        int bytes = stream.Read(data, 0, data.Length);
+                        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
+                        var message = builder.ToString() + " <";
+                        Console.WriteLine(message.PadLeft(80, ' '));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception during read " + ex.Message);
+            }
+        }
+
+        private void WriteTask(CancellationToken token)
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    var delay = random.Next(minDelay, maxDelay);
+                    Thread.Sleep(delay);
+                    var message = messagesRepository.GetMessage();
+                    var data = Encoding.Unicode.GetBytes(message);
+                    Console.WriteLine(message);
+                    stream.Write(data, 0, data.Length);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception during write " + ex.Message);
+            }
         }
     }
 }

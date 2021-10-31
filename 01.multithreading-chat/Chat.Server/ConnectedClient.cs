@@ -17,6 +17,7 @@ namespace Chat.Server
         readonly Random random = new Random();
         readonly int minDelay = 500;
         readonly int maxDelay = 1000;
+        NetworkStream stream;
 
         public ConnectedClient(TcpClient client, MessagesRepository messagesRepository)
         {
@@ -26,27 +27,12 @@ namespace Chat.Server
 
         public void Process()
         {
-            NetworkStream stream = null;
             try
             {
                 stream = client.GetStream();
-                while (true)
-                {
-                    byte[] data = new byte[256];
-                    var builder = new StringBuilder();
-                    do
-                    {
-                        int bytes = stream.Read(data, 0, data.Length);
-                        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
-                    }
-                    while (stream.DataAvailable);
-
-                    var delay = random.Next(minDelay, maxDelay);
-                    Thread.Sleep(delay);
-                    var message = messagesRepository.GetMessage();
-                    data = Encoding.Unicode.GetBytes(message);
-                    stream.Write(data, 0, data.Length);
-                }
+                var readTask = Task.Factory.StartNew(ReadTask);
+                var writeTask = Task.Factory.StartNew(WriteTask);
+                Task.WaitAll(readTask, writeTask);
             }
             catch (Exception ex)
             {
@@ -63,6 +49,47 @@ namespace Chat.Server
                 {
                     client.Close();
                 }
+            }
+        }
+
+        private void ReadTask()
+        {
+            try
+            {
+                while (true)
+                {
+                    byte[] data = new byte[256];
+                    var builder = new StringBuilder();
+                    do
+                    {
+                        int bytes = stream.Read(data, 0, data.Length);
+                        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
+                    }
+                    while (stream.DataAvailable);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception during read " + ex.Message);
+            }
+        }
+
+        private void WriteTask()
+        {
+            try
+            {
+                while (true)
+                {
+                    var delay = random.Next(minDelay, maxDelay);
+                    Thread.Sleep(delay);
+                    var message = messagesRepository.GetMessage();
+                    var data = Encoding.Unicode.GetBytes(message);
+                    stream.Write(data, 0, data.Length);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception during write " + ex.Message);
             }
         }
     }
