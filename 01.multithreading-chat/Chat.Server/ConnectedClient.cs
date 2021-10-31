@@ -33,35 +33,38 @@ namespace Chat.Server
                 stream = client.GetStream();
                 UserName = ReadMessage();
                 server.IntroduceUser(this);
+                //ShareLatestMessagesHistory();
                 ReadMessages();
             }
             catch (Exception ex)
             {
+                server.RemoveClient(this);
+                server.UserLeftChat(this);
                 Console.WriteLine(ex.Message);
             }
             finally
             {
-                server.RemoveClient(this);
                 Close();
             }
         }
 
         private void ReadMessages()
         {
-            while (true)
-            {
-                try
+            //try
+            //{
+                while (true)
                 {
                     var message = ReadMessage();
+                    server.UpdateMessageHistory(this, message);
                     message = UserName + ": " + message;
-                    server.BroadcastMessage(message, Id);
+                    server.BroadcastMessage(message, this);
                 }
-                catch (Exception ex)
-                {
-                    server.UserLeftChat(this);
-                    Console.WriteLine("Exception during read " + ex.Message);
-                }
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    server.UserLeftChat(this);
+            //    Console.WriteLine("Exception during read " + ex.Message);
+            //}
         }
 
         private string ReadMessage()
@@ -80,8 +83,15 @@ namespace Chat.Server
 
         public void WriteMessage(string message)
         {
-            var data = Encoding.Unicode.GetBytes(message);
-            stream.Write(data, 0, data.Length);
+            try
+            {
+                var data = Encoding.Unicode.GetBytes(message);
+                stream.Write(data, 0, data.Length);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Server exception during write" + ex.Message);
+            }
         }
 
         public void Close()
@@ -95,6 +105,18 @@ namespace Chat.Server
             {
                 client.Close();
             }
+        }
+
+        private void ShareLatestMessagesHistory()
+        {
+            var messages = server.GetMessagesHistory();
+            var builder = new StringBuilder();
+            foreach (var message in messages)
+            {
+                builder.Append(message.Item1 + ": " + message.Item2 + Environment.NewLine);
+            }
+
+            WriteMessage(builder.ToString());
         }
     }
 }

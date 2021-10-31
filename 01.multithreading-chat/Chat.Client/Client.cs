@@ -12,7 +12,7 @@ namespace Chat.Client
     class Client
     {
         readonly Random random = new Random();
-        readonly int minDelay = 100;
+        readonly int minDelay = 1000;
         readonly int maxDelay = 3000;
         readonly int port = 12000;
         readonly string address = "127.0.0.1";
@@ -45,6 +45,7 @@ namespace Chat.Client
                 client = new TcpClient(address, port);
                 stream = client.GetStream();
                 WriteMessage(userName);
+                //GetChatHistory();
                 var readTask = Task.Factory.StartNew(() => ReadTask(token), token);
                 var writeTask = Task.Factory.StartNew(() => WriteTask(token), token);
                 Task.WaitAll(readTask, writeTask);
@@ -76,14 +77,8 @@ namespace Chat.Client
             {
                 while (!token.IsCancellationRequested)
                 {
-                    byte[] data = new byte[256];
-                    var builder = new StringBuilder();
-                    while (stream.DataAvailable)
-                    {
-                        int bytes = stream.Read(data, 0, data.Length);
-                        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
-                        Console.WriteLine(builder.ToString());
-                    }
+                    var message = ReadMessage();
+                    Console.WriteLine(message);
                 }
             }
             catch (Exception ex)
@@ -115,7 +110,7 @@ namespace Chat.Client
         {
             for (var i = 0; i < 100; i++)
             {
-                messages.Add($"Message {i}.");
+                messages.Add($"Message {i} from {userName}.");
             }
         }
 
@@ -130,6 +125,26 @@ namespace Chat.Client
         {
             var data = Encoding.Unicode.GetBytes(message);
             stream.Write(data, 0, data.Length);
+        }
+
+        private string ReadMessage()
+        {
+            byte[] data = new byte[256];
+            var builder = new StringBuilder();
+            do
+            {
+                int bytes = stream.Read(data, 0, data.Length);
+                builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
+            }
+            while (stream.DataAvailable) ;
+
+            return builder.ToString();
+        }
+
+        private void GetChatHistory()
+        {
+            Console.WriteLine("Chat history");
+            Console.WriteLine(ReadMessage());
         }
 
         private void Disconnect()

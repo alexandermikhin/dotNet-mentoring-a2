@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace Chat.Server
 {
@@ -13,6 +13,9 @@ namespace Chat.Server
         readonly int port = 12000;
         readonly string host = "127.0.0.1";
         readonly List<ConnectedClient> clients = new List<ConnectedClient>();
+        readonly ConcurrentQueue<Tuple<string, string>> latestMessages = new ConcurrentQueue<Tuple<string, string>>();
+        readonly int historySize = 10;
+        readonly ReaderWriterLockSlim readerWriterLockSlim = new ReaderWriterLockSlim();
 
         TcpListener listener;
 
@@ -42,35 +45,41 @@ namespace Chat.Server
 
         public void AddClient(ConnectedClient client)
         {
+            readerWriterLockSlim.EnterWriteLock();
             this.clients.Add(client);
+            readerWriterLockSlim.ExitWriteLock();
         }
 
         public void IntroduceUser(ConnectedClient client)
         {
             var message = client.UserName + " entered the chart";
-            BroadcastMessage(message, client.Id);
+            BroadcastMessage(message, client);
         }
 
         public void UserLeftChat(ConnectedClient client)
         {
             var message = client.UserName + " left the chat";
-            BroadcastMessage(message, client.Id);
+            BroadcastMessage(message, client);
         }
 
-        public void BroadcastMessage(string message, Guid id)
+        public void BroadcastMessage(string message, ConnectedClient client)
         {
-            foreach (var client in clients)
+            readerWriterLockSlim.EnterReadLock();
+            foreach (var c in clients)
             {
-                if (client.Id != id)
+                if (client.Id != c.Id)
                 {
-                    client.WriteMessage(message);
+                    c.WriteMessage(message);
                 }
             }
+            readerWriterLockSlim.ExitReadLock();
         }
 
         public void RemoveClient(ConnectedClient client)
         {
+            readerWriterLockSlim.EnterWriteLock();
             clients.Remove(client);
+            readerWriterLockSlim.ExitWriteLock();
         }
 
         public void Disconnect()
@@ -90,6 +99,21 @@ namespace Chat.Server
         private void CloseClients()
         {
             clients.ForEach(c => c.Close());
+        }
+
+        public void UpdateMessageHistory(ConnectedClient client, string message)
+        {
+            if (latestMessages.Count >= historySize)
+            {
+                latestMessages.TryDequeue(out _);
+            }
+
+            latestMessages.Enqueue(new Tuple<string, string>(client.UserName, message));
+        }
+
+        public IEnumerable<Tuple<string, string>> GetMessagesHistory()
+        {
+            return latestMessages.ToArray();
         }
     }
 }
