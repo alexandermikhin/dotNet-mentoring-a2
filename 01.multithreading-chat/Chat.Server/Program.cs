@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
-using Chat.Shared;
 
 namespace Chat.Server
 {
@@ -13,10 +12,21 @@ namespace Chat.Server
     {
         static void Main(string[] args)
         {
-            var messagesRepository = new MessagesRepository("server");
-            //var server = new ServerSocket();
-            var server = new Server(messagesRepository);
-            server.Start();
+            Server server = null;
+            try
+            {
+                server = new Server();
+                server.Start();
+            }
+            catch (Exception ex)
+            {
+                if (server != null)
+                {
+                    server.Disconnect();
+                }
+
+                Console.WriteLine("Exception on server " + ex.Message);
+            }
         }
     }
 }

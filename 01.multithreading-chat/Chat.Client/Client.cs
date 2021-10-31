@@ -6,23 +6,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
-using Chat.Shared;
 
 namespace Chat.Client
 {
     class Client
     {
-        readonly MessagesRepository messagesRepository;
         readonly Random random = new Random();
         readonly int minDelay = 100;
         readonly int maxDelay = 3000;
         readonly int port = 12000;
         readonly string address = "127.0.0.1";
+        TcpClient client;
         NetworkStream stream;
+        readonly string userName;
+        readonly List<string> messages = new List<string>();
 
-        public Client(MessagesRepository messagesRepository)
+        public Client(string userName)
         {
-            this.messagesRepository = messagesRepository;
+            this.userName = userName;
+            InitMessages();
         }
 
         public void Start()
@@ -38,11 +40,11 @@ namespace Chat.Client
 
         private void Chat(CancellationToken token)
         {
-            TcpClient client = null;
             try
             {
                 client = new TcpClient(address, port);
                 stream = client.GetStream();
+                WriteMessage(userName);
                 var readTask = Task.Factory.StartNew(() => ReadTask(token), token);
                 var writeTask = Task.Factory.StartNew(() => WriteTask(token), token);
                 Task.WaitAll(readTask, writeTask);
@@ -53,15 +55,7 @@ namespace Chat.Client
             }
             finally
             {
-                if (stream != null)
-                {
-                    stream.Close();
-                }
-
-                if (client != null)
-                {
-                    client.Close();
-                }
+                Disconnect();
             }
         }
 
@@ -88,8 +82,7 @@ namespace Chat.Client
                     {
                         int bytes = stream.Read(data, 0, data.Length);
                         builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
-                        var message = builder.ToString() + " <";
-                        Console.WriteLine(message.PadLeft(80, ' '));
+                        Console.WriteLine(builder.ToString());
                     }
                 }
             }
@@ -107,15 +100,48 @@ namespace Chat.Client
                 {
                     var delay = random.Next(minDelay, maxDelay);
                     Thread.Sleep(delay);
-                    var message = messagesRepository.GetMessage();
-                    var data = Encoding.Unicode.GetBytes(message);
-                    Console.WriteLine(message);
-                    stream.Write(data, 0, data.Length);
+                    var message = GetMessage();
+                    WriteMessage(message);
+                    Console.WriteLine(message.PadLeft(80, ' '));
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Exception during write " + ex.Message);
+            }
+        }
+
+        private void InitMessages()
+        {
+            for (var i = 0; i < 100; i++)
+            {
+                messages.Add($"Message {i}.");
+            }
+        }
+
+        private string GetMessage()
+        {
+            var index = random.Next(0, messages.Count);
+
+            return messages[index];
+        }
+
+        private void WriteMessage(string message)
+        {
+            var data = Encoding.Unicode.GetBytes(message);
+            stream.Write(data, 0, data.Length);
+        }
+
+        private void Disconnect()
+        {
+            if (stream != null)
+            {
+                stream.Close();
+            }
+
+            if (client != null)
+            {
+                client.Close();
             }
         }
     }

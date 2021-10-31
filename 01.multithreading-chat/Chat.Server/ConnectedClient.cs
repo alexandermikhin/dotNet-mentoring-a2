@@ -5,24 +5,25 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
-using Chat.Shared;
 using System.Threading;
 
 namespace Chat.Server
 {
     class ConnectedClient
     {
+        public Guid Id { get; private set; }
+        public string UserName { get; private set; }
+
         readonly TcpClient client;
-        readonly MessagesRepository messagesRepository;
-        readonly Random random = new Random();
-        readonly int minDelay = 500;
-        readonly int maxDelay = 1000;
+        readonly Server server;
         NetworkStream stream;
 
-        public ConnectedClient(TcpClient client, MessagesRepository messagesRepository)
+        public ConnectedClient(TcpClient client, Server server)
         {
+            Id = Guid.NewGuid();
             this.client = client;
-            this.messagesRepository = messagesRepository;
+            this.server = server;
+            this.server.AddClient(this);
         }
 
         public void Process()
@@ -30,9 +31,9 @@ namespace Chat.Server
             try
             {
                 stream = client.GetStream();
-                var readTask = Task.Factory.StartNew(ReadTask);
-                var writeTask = Task.Factory.StartNew(WriteTask);
-                Task.WaitAll(readTask, writeTask);
+                UserName = ReadMessage();
+                server.IntroduceUser(this);
+                ReadMessages();
             }
             catch (Exception ex)
             {
@@ -40,56 +41,59 @@ namespace Chat.Server
             }
             finally
             {
-                if (stream != null)
-                {
-                    stream.Close();
-                }
+                server.RemoveClient(this);
+                Close();
+            }
+        }
 
-                if (client != null)
+        private void ReadMessages()
+        {
+            while (true)
+            {
+                try
                 {
-                    client.Close();
+                    var message = ReadMessage();
+                    message = UserName + ": " + message;
+                    server.BroadcastMessage(message, Id);
+                }
+                catch (Exception ex)
+                {
+                    server.UserLeftChat(this);
+                    Console.WriteLine("Exception during read " + ex.Message);
                 }
             }
         }
 
-        private void ReadTask()
+        private string ReadMessage()
         {
-            try
+            byte[] data = new byte[256];
+            var builder = new StringBuilder();
+            do
             {
-                while (true)
-                {
-                    byte[] data = new byte[256];
-                    var builder = new StringBuilder();
-                    do
-                    {
-                        int bytes = stream.Read(data, 0, data.Length);
-                        builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
-                    }
-                    while (stream.DataAvailable);
-                }
+                int bytes = stream.Read(data, 0, data.Length);
+                builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Exception during read " + ex.Message);
-            }
+            while (stream.DataAvailable);
+
+            return builder.ToString();
         }
 
-        private void WriteTask()
+        public void WriteMessage(string message)
         {
-            try
+            var data = Encoding.Unicode.GetBytes(message);
+            stream.Write(data, 0, data.Length);
+        }
+
+        public void Close()
+        {
+            if (stream != null)
             {
-                while (true)
-                {
-                    var delay = random.Next(minDelay, maxDelay);
-                    Thread.Sleep(delay);
-                    var message = messagesRepository.GetMessage();
-                    var data = Encoding.Unicode.GetBytes(message);
-                    stream.Write(data, 0, data.Length);
-                }
+                stream.Close();
             }
-            catch (Exception ex)
+
+            if (client != null)
             {
-                Console.WriteLine("Exception during write " + ex.Message);
+                client.Close();
             }
         }
     }
