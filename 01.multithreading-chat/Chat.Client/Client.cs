@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net;
-using System.Net.Sockets;
 
 namespace Chat.Client
 {
@@ -20,6 +19,8 @@ namespace Chat.Client
         NetworkStream stream;
         readonly string userName;
         readonly List<string> messages = new List<string>();
+        object serverStoppedLock = new object();
+        bool serverStoppedMessageDisplayed = false;
 
         public Client(string userName)
         {
@@ -29,16 +30,12 @@ namespace Chat.Client
 
         public void Start()
         {
-            Console.WriteLine("Press 'x' to exit chat.");
-            var cancellationTokenSource = new CancellationTokenSource();
-            var cancelTask = Task.Factory.StartNew(() => CancelTask(cancellationTokenSource));
-            var chat = Task.Factory.StartNew(() => Chat(cancellationTokenSource.Token), cancellationTokenSource.Token);
-            chat.Wait();
+            Chat();
             Console.WriteLine("Finished. Press any key");
             Console.ReadKey();
         }
 
-        private void Chat(CancellationToken token)
+        private void Chat()
         {
             try
             {
@@ -46,13 +43,19 @@ namespace Chat.Client
                 stream = client.GetStream();
                 WriteMessage(userName);
                 //GetChatHistory();
-                var readTask = Task.Factory.StartNew(() => ReadTask(token), token);
-                var writeTask = Task.Factory.StartNew(() => WriteTask(token), token);
+                var cancellationTokenSource = new CancellationTokenSource();
+                var cancelTask = Task.Factory.StartNew(() => CancelTask(cancellationTokenSource));
+                var readTask = Task.Factory.StartNew(() => ReadTask(cancellationTokenSource.Token), cancellationTokenSource.Token);
+                var writeTask = Task.Factory.StartNew(() => WriteTask(cancellationTokenSource.Token), cancellationTokenSource.Token);
                 Task.WaitAll(readTask, writeTask);
+            }
+            catch (SocketException)
+            {
+                Console.WriteLine("Could not find server. Exiting.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Exception occured " + ex);
+                Console.WriteLine("Exception occured " + ex.Message);
             }
             finally
             {
@@ -62,6 +65,7 @@ namespace Chat.Client
 
         private void CancelTask(CancellationTokenSource source)
         {
+            Console.WriteLine("Press 'x' to exit chat.");
             ConsoleKeyInfo keyInfo;
             do
             {
@@ -81,6 +85,10 @@ namespace Chat.Client
                     Console.WriteLine(message);
                 }
             }
+            catch (IOException)
+            {
+                HandleServerStoppedException();
+            }
             catch (Exception ex)
             {
                 Console.WriteLine("Exception during read " + ex.Message);
@@ -99,6 +107,10 @@ namespace Chat.Client
                     WriteMessage(message);
                     Console.WriteLine(message.PadLeft(80, ' '));
                 }
+            }
+            catch (IOException)
+            {
+                HandleServerStoppedException();
             }
             catch (Exception ex)
             {
@@ -136,7 +148,7 @@ namespace Chat.Client
                 int bytes = stream.Read(data, 0, data.Length);
                 builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
             }
-            while (stream.DataAvailable) ;
+            while (stream.DataAvailable);
 
             return builder.ToString();
         }
@@ -157,6 +169,18 @@ namespace Chat.Client
             if (client != null)
             {
                 client.Close();
+            }
+        }
+
+        private void HandleServerStoppedException()
+        {
+            lock (serverStoppedLock)
+            {
+                if (!serverStoppedMessageDisplayed)
+                {
+                    Console.WriteLine("Server stopped. Exiting");
+                    serverStoppedMessageDisplayed = true;
+                }
             }
         }
     }
