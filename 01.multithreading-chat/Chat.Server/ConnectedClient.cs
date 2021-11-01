@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Net;
 using System.Net.Sockets;
-using System.Threading;
+using System.Text;
 
 namespace Chat.Server
 {
@@ -33,7 +28,7 @@ namespace Chat.Server
                 stream = client.GetStream();
                 UserName = ReadMessage();
                 server.IntroduceUser(this);
-                //ShareLatestMessagesHistory();
+                server.ShareLatestMessagesHistory(this);
                 ReadMessages();
             }
             catch (Exception ex)
@@ -50,21 +45,13 @@ namespace Chat.Server
 
         private void ReadMessages()
         {
-            //try
-            //{
-                while (true)
-                {
-                    var message = ReadMessage();
-                    server.UpdateMessageHistory(this, message);
-                    message = UserName + ": " + message;
-                    server.BroadcastMessage(message, this);
-                }
-            //}
-            //catch (Exception ex)
-            //{
-            //    server.UserLeftChat(this);
-            //    Console.WriteLine("Exception during read " + ex.Message);
-            //}
+            while (true)
+            {
+                var message = ReadMessage();
+                server.UpdateMessageHistory(this, message);
+                message = UserName + ": " + message;
+                server.BroadcastMessage(message, this);
+            }
         }
 
         private string ReadMessage()
@@ -90,7 +77,7 @@ namespace Chat.Server
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Server exception during write" + ex.Message);
+                Console.WriteLine("Server exception during write " + ex.Message);
             }
         }
 
@@ -105,18 +92,6 @@ namespace Chat.Server
             {
                 client.Close();
             }
-        }
-
-        private void ShareLatestMessagesHistory()
-        {
-            var messages = server.GetMessagesHistory();
-            var builder = new StringBuilder();
-            foreach (var message in messages)
-            {
-                builder.Append(message.Item1 + ": " + message.Item2 + Environment.NewLine);
-            }
-
-            WriteMessage(builder.ToString());
         }
     }
 }

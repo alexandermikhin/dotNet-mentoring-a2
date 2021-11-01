@@ -3,8 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading.Tasks;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Chat.Server
 {
@@ -13,7 +14,7 @@ namespace Chat.Server
         readonly int port = 12000;
         readonly string host = "127.0.0.1";
         readonly List<ConnectedClient> clients = new List<ConnectedClient>();
-        readonly ConcurrentQueue<Tuple<string, string>> latestMessages = new ConcurrentQueue<Tuple<string, string>>();
+        readonly ConcurrentQueue<MessageHistoryItem> latestMessages = new ConcurrentQueue<MessageHistoryItem>();
         readonly int historySize = 10;
         readonly ReaderWriterLockSlim readerWriterLockSlim = new ReaderWriterLockSlim();
 
@@ -108,12 +109,20 @@ namespace Chat.Server
                 latestMessages.TryDequeue(out _);
             }
 
-            latestMessages.Enqueue(new Tuple<string, string>(client.UserName, message));
+            var item = new MessageHistoryItem() { UserName = client.UserName, Message = message };
+            latestMessages.Enqueue(item);
         }
 
-        public IEnumerable<Tuple<string, string>> GetMessagesHistory()
+        public void ShareLatestMessagesHistory(ConnectedClient client)
         {
-            return latestMessages.ToArray();
+            var messages = latestMessages.ToArray();
+            var builder = new StringBuilder();
+            foreach (var message in messages)
+            {
+                builder.Append(message.UserName + ": " + message.Message);
+            }
+
+            client.WriteMessage(builder.ToString());
         }
     }
 }

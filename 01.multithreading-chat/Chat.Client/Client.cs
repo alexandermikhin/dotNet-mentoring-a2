@@ -42,7 +42,6 @@ namespace Chat.Client
                 client = new TcpClient(address, port);
                 stream = client.GetStream();
                 WriteMessage(userName);
-                //GetChatHistory();
                 var cancellationTokenSource = new CancellationTokenSource();
                 var cancelTask = Task.Factory.StartNew(() => CancelTask(cancellationTokenSource));
                 var readTask = Task.Factory.StartNew(() => ReadTask(cancellationTokenSource.Token), cancellationTokenSource.Token);
