@@ -52,6 +52,7 @@ namespace AsyncAwait.Task1.CancellationTokens
         {
             Task<long> task = null;
             Task<int> nTask = null;
+            bool finished = false;
             do
             {
                 try
@@ -66,6 +67,7 @@ namespace AsyncAwait.Task1.CancellationTokens
                     nTask.Start();
                     long sum = task.GetAwaiter().GetResult();
                     Console.WriteLine($"Sum for {n} = {sum}.");
+                    finished = true;
                 }
                 catch (OperationCanceledException)
                 {
@@ -76,7 +78,7 @@ namespace AsyncAwait.Task1.CancellationTokens
                     }
                 }
             }
-            while (!task.IsCompleted);
+            while (!finished);
         }
 
         static int CancelTask(CancellationTokenSource source)
