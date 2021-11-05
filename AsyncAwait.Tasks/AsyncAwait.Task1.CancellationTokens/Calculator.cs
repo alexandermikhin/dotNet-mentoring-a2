@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AsyncAwait.Task1.CancellationTokens
@@ -19,6 +20,11 @@ namespace AsyncAwait.Task1.CancellationTokens
             });
 
             return sum;
+        }
+
+        public static Task<long> CalculateAsync(int n, CancellationToken token)
+        {
+            return new Task<long>(() => Calculate(n, token), token);
         }
     }
 }
