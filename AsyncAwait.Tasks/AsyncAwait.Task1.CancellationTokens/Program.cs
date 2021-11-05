@@ -8,6 +8,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AsyncAwait.Task1.CancellationTokens
 {
@@ -48,15 +50,40 @@ namespace AsyncAwait.Task1.CancellationTokens
 
         private static void CalculateSum(int n)
         {
-            // todo: make calculation asynchronous
-            long sum = Calculator.Calculate(n);
-            Console.WriteLine($"Sum for {n} = {sum}.");
-            Console.WriteLine();
-            Console.WriteLine("Enter N: ");
-            // todo: add code to process cancellation and uncomment this line    
-            // Console.WriteLine($"Sum for {n} cancelled...");
-                        
-            Console.WriteLine($"The task for {n} started... Enter N to cancel the request:");
+            Task<long> task = null;
+            Task<int> nTask = null;
+            do
+            {
+                try
+                {
+                    var tokenSource = new CancellationTokenSource();
+                    task = new Task<long>(() => Calculator.Calculate(n, tokenSource.Token), tokenSource.Token);
+                    Console.WriteLine($"The task for {n} started... Enter N to cancel the request:");
+                    task.Start();
+                    Console.WriteLine("Enter N: ");
+                    nTask = new Task<int>(() => CancelTask(tokenSource), tokenSource.Token);
+                    nTask.Start();
+                    long sum = task.Result;
+                    Console.WriteLine($"Sum for {n} = {sum}.");
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine($"Sum for {n} cancelled...");
+                    if (nTask != null)
+                    {
+                        n = nTask.Result;
+                    }
+                }
+            }
+            while (!task.IsCompleted);
+        }
+
+        static int CancelTask(CancellationTokenSource source)
+        {
+            string input = Console.ReadLine();
+            int.TryParse(input, out int n);
+            source.Cancel();
+            return n;
         }
     }
 }

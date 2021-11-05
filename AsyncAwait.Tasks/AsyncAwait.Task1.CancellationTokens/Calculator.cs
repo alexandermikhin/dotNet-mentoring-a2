@@ -1,20 +1,22 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 
 namespace AsyncAwait.Task1.CancellationTokens
 {
     static class Calculator
     {
         // todo: change this method to support cancellation token
-        public static long Calculate(int n/*, CancellationToken token*/)
+        public static long Calculate(int n, CancellationToken token)
         {
             long sum = 0;
 
-            for (int i = 0; i < n; i++)
+            var options = new ParallelOptions() { CancellationToken = token };
+            Parallel.For(0, n, options, (i) =>
             {
-                // i + 1 is to allow 2147483647 (Max(Int32)) 
-                sum = sum + (i + 1);
-                Thread.Sleep(10);
-            }
+                options.CancellationToken.ThrowIfCancellationRequested();
+                Interlocked.Add(ref sum, i + 1);
+                Thread.Sleep(100);
+            });
 
             return sum;
         }
