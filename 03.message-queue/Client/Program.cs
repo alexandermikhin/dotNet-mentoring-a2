@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Server;
 
 namespace Client
 {
@@ -11,7 +12,7 @@ namespace Client
             var config = new ClientConfig()
             {
                 DestinationFolder = @".\processed",
-                QueueName = @".\Private$\MessageQueue",
+                QueueName = Constants.QueueName,
             };
 
             var client = new Client(config);
