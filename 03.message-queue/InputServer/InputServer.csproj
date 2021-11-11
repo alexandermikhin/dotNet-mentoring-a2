@@ -51,5 +51,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DirectoryWatch\DirectoryWatch.csproj">
+      <Project>{d033e793-6108-47bf-8ddf-75a8e48df43a}</Project>
+      <Name>DirectoryWatch</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

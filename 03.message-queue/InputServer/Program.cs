@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Collections.Concurrent;
 using System.IO;
-using System.Threading.Tasks;
 using System.Messaging;
 using System.Threading;
+using System.Threading.Tasks;
+using DirectoryWatch;
 
 namespace InputServer
 {
@@ -13,18 +12,22 @@ namespace InputServer
     {
         const string QueueName = @".\Private$\MessageQueue";
         const string SourceFolder = @"D:\dotNetlab\Temp\pdfs\";
+        const string FileFilter = "*.pdf";
+        static readonly ConcurrentQueue<string> filesQueue = new ConcurrentQueue<string>();
+        static readonly AutoResetEvent fileAdded = new AutoResetEvent(false);
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Creating messsage queue");
+
             CreateMessageQueue();
-            Console.WriteLine("Starting server...");
-            var task = Task.Factory.StartNew(Server);
-            task.Wait();
+            var watchTask = Task.Factory.StartNew(WatchDirectory);
+            var serverTask = Task.Factory.StartNew(Server);
+            Task.WaitAll(watchTask, serverTask);
         }
 
         static void CreateMessageQueue()
         {
+            Console.WriteLine("Creating messsage queue");
             if (!MessageQueue.Exists(QueueName))
             {
                 MessageQueue.Create(QueueName);
@@ -33,23 +36,55 @@ namespace InputServer
 
         static void Server()
         {
-            using (var serverQueue = new MessageQueue(QueueName))
+            while (true)
             {
-                while (true)
+                fileAdded.WaitOne();
+                using (var serverQueue = new MessageQueue(QueueName))
                 {
                     serverQueue.Formatter = new BinaryMessageFormatter();
-                    var fileName = "Learn instruction_mentee.pdf";
-                    byte[] bf = File.ReadAllBytes(SourceFolder + fileName);
-                    var messageBody = new FileMessageBody()
+
+                    while (!filesQueue.IsEmpty)
                     {
-                        Id = Guid.NewGuid(),
-                        Content = bf,
-                        FileName = fileName,
-                    };
-                    serverQueue.Send(messageBody);
-                    Console.WriteLine($"File ${messageBody.FileName} was put in queue.");
+                        if (filesQueue.TryDequeue(out var fileName))
+                        {
+                            byte[] bf = File.ReadAllBytes(SourceFolder + fileName);
+                            var messageBody = new FileMessageBody()
+                            {
+                                Id = Guid.NewGuid(),
+                                Content = bf,
+                                FileName = fileName,
+                            };
+                            serverQueue.Send(messageBody);
+                            Console.WriteLine($"File {fileName} was put in queue.");
+                        }
+                    }
                 }
             }
+        }
+
+        static void WatchDirectory()
+        {
+            Console.WriteLine("Starting server...");
+            var directoryWatcher = new DirectoryWatcher();
+            directoryWatcher.Created += OnCreated;
+            directoryWatcher.Renamed += OnRenamed;
+            directoryWatcher.Watch(SourceFolder, FileFilter);
+        }
+
+        static void OnCreated(object sender, FileWatchEventArgs args)
+        {
+            EnqueueFile(args.FileInfo);
+        }
+
+        static void OnRenamed(object sender, FileWatchEventArgs args)
+        {
+            EnqueueFile(args.FileInfo);
+        }
+
+        static void EnqueueFile(FileInfo fileInfo)
+        {
+            filesQueue.Enqueue(fileInfo.Name);
+            fileAdded.Set();
         }
     }
 }

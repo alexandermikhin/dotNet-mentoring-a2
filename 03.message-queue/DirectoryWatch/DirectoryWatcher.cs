@@ -5,35 +5,29 @@ namespace DirectoryWatch
 {
     public class DirectoryWatcher
     {
-        public event EventHandler<FileWatchEventArgs> Changed;
+        public event EventHandler<FileWatchEventArgs> Created;
         public event EventHandler<FileWatchEventArgs> Renamed;
 
         public void Watch(string path, string filter)
         {
-            using (FileSystemWatcher watcher = new FileSystemWatcher())
-            {
-                watcher.Path = path;
+            FileSystemWatcher watcher = new FileSystemWatcher();
+            watcher.Path = path;
 
-                watcher.NotifyFilter = NotifyFilters.LastAccess
-                    | NotifyFilters.LastWrite
-                    | NotifyFilters.FileName
-                    | NotifyFilters.DirectoryName;
+            watcher.NotifyFilter = NotifyFilters.LastWrite
+                | NotifyFilters.FileName;
 
-                watcher.Filter = filter;
+            watcher.Filter = filter;
 
-                watcher.Changed += OnChanged;
-                watcher.Created += OnChanged;
-                watcher.Deleted += OnChanged;
-                watcher.Renamed += OnRenamed;
+            watcher.Created += OnCreated;
+            watcher.Renamed += OnRenamed;
 
-                watcher.EnableRaisingEvents = true;
-            }
+            watcher.EnableRaisingEvents = true;
         }
 
-        private void OnChanged(object source, FileSystemEventArgs e)
+        private void OnCreated(object source, FileSystemEventArgs e)
         {
             var args = new FileWatchEventArgs(new FileInfo(e.FullPath));
-            this.Changed?.Invoke(this, args);
+            this.Created?.Invoke(this, args);
         }
 
         private void OnRenamed(object source, RenamedEventArgs e)
