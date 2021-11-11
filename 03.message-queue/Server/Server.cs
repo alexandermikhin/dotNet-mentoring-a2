@@ -10,12 +10,14 @@ namespace Server
 {
     internal class Server
     {
+        readonly DirectoryWatcher directoryWatcher;
         readonly ServerConfig config;
         readonly ConcurrentQueue<FileMessageBody> messagesQueue = new ConcurrentQueue<FileMessageBody>();
         readonly AutoResetEvent messageAdded = new AutoResetEvent(false);
 
-        public Server(ServerConfig config)
+        public Server(DirectoryWatcher directoryWatcher, ServerConfig config)
         {
+            this.directoryWatcher = directoryWatcher;
             this.config = config;
         }
 
@@ -65,7 +67,6 @@ namespace Server
         void WatchDirectory()
         {
             Console.WriteLine("Watching directory...");
-            var directoryWatcher = new DirectoryWatcher();
             directoryWatcher.Created += OnCreated;
             directoryWatcher.Renamed += OnRenamed;
             try

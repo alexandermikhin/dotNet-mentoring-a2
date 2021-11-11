@@ -1,4 +1,5 @@
 ﻿using System;
+using DirectoryWatch;
 
 namespace Server
 {
@@ -15,7 +16,8 @@ namespace Server
                 SourceFolder = @"D:\Temp\pdf\"
             };
 
-            var server = new Server(config);
+            var directoryWatcher = new DirectoryWatcher();
+            var server = new Server(directoryWatcher, config);
             server.Start();
         }
     }
