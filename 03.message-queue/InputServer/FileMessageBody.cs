@@ -18,5 +18,7 @@ namespace InputServer
         public int Part { get; set; }
 
         public int TotalParts { get; set; }
+
+        public int TotalBytes { get; set; }
     }
 }

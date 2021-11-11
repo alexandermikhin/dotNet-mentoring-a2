@@ -1,9 +1,8 @@
 ﻿using System;
-using System.IO;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Messaging;
-using System.Text;
 using System.Threading.Tasks;
 using InputServer;
 
@@ -13,6 +12,8 @@ namespace Client
     {
         const string QueueName = @".\Private$\MessageQueue";
         const string DestinationFolder = @"D:\dotNetlab\Temp\pdfs_processed\";
+        static readonly ConcurrentDictionary<Guid, SortedList<int, FileMessageBody>> messagesDictionary = new ConcurrentDictionary<Guid, SortedList<int, FileMessageBody>>();
+        static object syncLock = new object();
 
         static void Main(string[] args)
         {
@@ -41,8 +42,49 @@ namespace Client
                 {
                     var message = queue.Receive();
                     var fileMessageBody = (FileMessageBody)message.Body;
-                    File.WriteAllBytes(DestinationFolder + fileMessageBody.FileName, fileMessageBody.Content);
-                    Console.WriteLine("File was processed " + fileMessageBody.FileName);
+                    var consoleMessage = $"Received file {fileMessageBody.FileName}.";
+                    if (fileMessageBody.TotalParts > 1)
+                    {
+                        consoleMessage += $" Part {fileMessageBody.Part} of {fileMessageBody.TotalParts}.";
+                    }
+
+                    Console.WriteLine(consoleMessage);
+                    lock (syncLock)
+                    {
+                        messagesDictionary.AddOrUpdate(fileMessageBody.Id,
+                            new SortedList<int, FileMessageBody>(fileMessageBody.TotalParts) { { fileMessageBody.Part, fileMessageBody } },
+                            (key, messages) =>
+                            {
+                                messages.Add(fileMessageBody.Part, fileMessageBody);
+                                return messages;
+                            });
+                    }
+
+                    TryWriteFile(fileMessageBody);
+                }
+            }
+        }
+
+        static void TryWriteFile(FileMessageBody messageBody)
+        {
+            lock (syncLock)
+            {
+                if (messagesDictionary.TryGetValue(messageBody.Id, out var messages))
+                {
+                    if (messages.Count == messageBody.TotalParts)
+                    {
+                        byte[] allBytes = new byte[messageBody.TotalBytes];
+                        int pointer = 0;
+                        foreach (var message in messages.Values)
+                        {
+                            Array.Copy(message.Content, 0, allBytes, pointer, message.Content.Length);
+                            pointer += message.Content.Length;
+                        }
+
+                        File.WriteAllBytes(DestinationFolder + messageBody.FileName, allBytes);
+                        messagesDictionary.TryRemove(messageBody.Id, out var _);
+                        Console.WriteLine("File was processed " + messageBody.FileName);
+                    }
                 }
             }
         }

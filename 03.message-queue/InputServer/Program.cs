@@ -12,7 +12,7 @@ namespace InputServer
     {
         const string QueueName = @".\Private$\MessageQueue";
         const string SourceFolder = @"D:\dotNetlab\Temp\pdfs\";
-        const string FileFilter = "*.mp4";
+        const string FileFilter = "*.pdf";
         const int ChunkSize = 10000;
         static readonly ConcurrentQueue<FileMessageBody> messagesQueue = new ConcurrentQueue<FileMessageBody>();
         static readonly AutoResetEvent messageAdded = new AutoResetEvent(false);
@@ -98,6 +98,7 @@ namespace InputServer
                     FileName = fileInfo.Name,
                     Part = i / ChunkSize + 1,
                     TotalParts = totalParts,
+                    TotalBytes = fileAllBytes.Length,
                 };
 
                 messagesQueue.Enqueue(messageBody);
