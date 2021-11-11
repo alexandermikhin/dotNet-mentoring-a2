@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Messaging;
 using System.Threading.Tasks;
-using InputServer;
+using Server;
 
 namespace Client
 {

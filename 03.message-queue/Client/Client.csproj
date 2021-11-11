@@ -51,9 +51,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\InputServer\InputServer.csproj">
+    <ProjectReference Include="..\Server\Server.csproj">
       <Project>{0420107c-fd5e-41d4-bcff-df95e246052a}</Project>
-      <Name>InputServer</Name>
+      <Name>Server</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

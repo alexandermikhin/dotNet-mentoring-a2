@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31025.194
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirectoryWatch", "DirectoryWatch\DirectoryWatch.csproj", "{D033E793-6108-47BF-8DDF-75A8E48DF43A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InputServer", "InputServer\InputServer.csproj", "{0420107C-FD5E-41D4-BCFF-DF95E246052A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{0420107C-FD5E-41D4-BCFF-DF95E246052A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{2DBB8E74-9132-466B-B9D2-F48C1508FFAE}"
 EndProject

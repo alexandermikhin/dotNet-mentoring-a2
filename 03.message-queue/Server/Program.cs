@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using DirectoryWatch;
 
-namespace InputServer
+namespace Server
 {
     class Program
     {
