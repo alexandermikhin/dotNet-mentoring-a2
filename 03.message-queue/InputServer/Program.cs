@@ -12,9 +12,10 @@ namespace InputServer
     {
         const string QueueName = @".\Private$\MessageQueue";
         const string SourceFolder = @"D:\dotNetlab\Temp\pdfs\";
-        const string FileFilter = "*.pdf";
-        static readonly ConcurrentQueue<string> filesQueue = new ConcurrentQueue<string>();
-        static readonly AutoResetEvent fileAdded = new AutoResetEvent(false);
+        const string FileFilter = "*.mp4";
+        const int ChunkSize = 10000;
+        static readonly ConcurrentQueue<FileMessageBody> messagesQueue = new ConcurrentQueue<FileMessageBody>();
+        static readonly AutoResetEvent messageAdded = new AutoResetEvent(false);
 
         static void Main(string[] args)
         {
@@ -38,24 +39,22 @@ namespace InputServer
         {
             while (true)
             {
-                fileAdded.WaitOne();
+                messageAdded.WaitOne();
                 using (var serverQueue = new MessageQueue(QueueName))
                 {
                     serverQueue.Formatter = new BinaryMessageFormatter();
 
-                    while (!filesQueue.IsEmpty)
+                    while (!messagesQueue.IsEmpty)
                     {
-                        if (filesQueue.TryDequeue(out var fileName))
+                        if (messagesQueue.TryDequeue(out var message))
                         {
-                            byte[] bf = File.ReadAllBytes(SourceFolder + fileName);
-                            var messageBody = new FileMessageBody()
+                            serverQueue.Send(message);
+                            var consoleMessage = $"File {message.FileName} was put in queue.";
+                            if (message.TotalParts > 1)
                             {
-                                Id = Guid.NewGuid(),
-                                Content = bf,
-                                FileName = fileName,
-                            };
-                            serverQueue.Send(messageBody);
-                            Console.WriteLine($"File {fileName} was put in queue.");
+                                consoleMessage += $" Part {message.Part} of {message.TotalParts}.";
+                            }
+                            Console.WriteLine(consoleMessage);
                         }
                     }
                 }
@@ -83,8 +82,56 @@ namespace InputServer
 
         static void EnqueueFile(FileInfo fileInfo)
         {
-            filesQueue.Enqueue(fileInfo.Name);
-            fileAdded.Set();
+            byte[] fileAllBytes = ReadFile(fileInfo);
+            Guid fileId = Guid.NewGuid();
+            double parts = (double)fileAllBytes.Length / ChunkSize;
+            int totalParts = (int)Math.Ceiling(parts);
+            for (int i = 0; i < fileAllBytes.Length; i += ChunkSize)
+            {
+                int length = Math.Min(fileAllBytes.Length - i, ChunkSize);
+                byte[] buffer = new byte[length];
+                Array.Copy(fileAllBytes, i, buffer, 0, length);
+                var messageBody = new FileMessageBody()
+                {
+                    Id = fileId,
+                    Content = buffer,
+                    FileName = fileInfo.Name,
+                    Part = i / ChunkSize + 1,
+                    TotalParts = totalParts,
+                };
+
+                messagesQueue.Enqueue(messageBody);
+            }
+
+            messageAdded.Set();
+        }
+
+        static byte[] ReadFile(FileInfo fileInfo)
+        {
+            byte[] buffer = null;
+            byte maxTriesCount = 10;
+            byte triesCount = 0;
+            bool read = false;
+            while (triesCount < maxTriesCount && !read)
+            {
+                try
+                {
+                    buffer = File.ReadAllBytes(fileInfo.FullName);
+                    read = true;
+                }
+                catch (Exception)
+                {
+                    triesCount++;
+                    Thread.Sleep(100);
+                }
+            }
+
+            if (buffer == null)
+            {
+                throw new IOException("Cannot read file");
+            }
+
+            return buffer;
         }
     }
 }
