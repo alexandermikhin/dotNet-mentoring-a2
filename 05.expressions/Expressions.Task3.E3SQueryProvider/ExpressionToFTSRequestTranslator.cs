@@ -33,6 +33,13 @@ namespace Expressions.Task3.E3SQueryProvider
 
                 return node;
             }
+
+            if(node.Method.DeclaringType == typeof(string))
+            {
+                ProcessStringMethod(node);
+                return node;
+            }
+
             return base.VisitMethodCall(node);
         }
 
@@ -44,13 +51,17 @@ namespace Expressions.Task3.E3SQueryProvider
                     if (node.Left.NodeType == ExpressionType.MemberAccess)
                     {
                         Visit(node.Left);
+                        _resultStringBuilder.Append("(");
                         Visit(node.Right);
+                        _resultStringBuilder.Append(")");
                     }
 
                     if (node.Left.NodeType == ExpressionType.Constant)
                     {
                         Visit(node.Right);
+                        _resultStringBuilder.Append("(");
                         Visit(node.Left);
+                        _resultStringBuilder.Append(")");
                     }
 
                     break;
@@ -71,9 +82,34 @@ namespace Expressions.Task3.E3SQueryProvider
 
         protected override Expression VisitConstant(ConstantExpression node)
         {
-            _resultStringBuilder.Append("(").Append(node.Value).Append(")");
+            _resultStringBuilder.Append(node.Value);
 
             return node;
+        }
+
+        #endregion
+
+        #region private methods
+
+        private void ProcessStringMethod(MethodCallExpression node)
+        {
+            var methodObject = node.Object;
+            Visit(methodObject);
+            _resultStringBuilder.Append("(");
+            if (node.Method.Name == nameof(string.EndsWith) || node.Method.Name == nameof(string.Contains))
+            {
+                _resultStringBuilder.Append("*");
+            }
+
+            var predicate = node.Arguments[0];
+            Visit(predicate);
+
+            if (node.Method.Name == nameof(string.StartsWith) || node.Method.Name == nameof(string.Contains))
+            {
+                _resultStringBuilder.Append("*");
+            }
+
+            _resultStringBuilder.Append(")");
         }
 
         #endregion
