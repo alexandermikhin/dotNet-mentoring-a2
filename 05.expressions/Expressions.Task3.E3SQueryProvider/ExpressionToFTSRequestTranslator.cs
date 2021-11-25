@@ -44,17 +44,13 @@ namespace Expressions.Task3.E3SQueryProvider
                     if (node.Left.NodeType == ExpressionType.MemberAccess)
                     {
                         Visit(node.Left);
-                        _resultStringBuilder.Append("(");
                         Visit(node.Right);
-                        _resultStringBuilder.Append(")");
                     }
 
                     if (node.Left.NodeType == ExpressionType.Constant)
                     {
                         Visit(node.Right);
-                        _resultStringBuilder.Append("(");
                         Visit(node.Left);
-                        _resultStringBuilder.Append(")");
                     }
 
                     break;
@@ -75,7 +71,7 @@ namespace Expressions.Task3.E3SQueryProvider
 
         protected override Expression VisitConstant(ConstantExpression node)
         {
-            _resultStringBuilder.Append(node.Value);
+            _resultStringBuilder.Append("(").Append(node.Value).Append(")");
 
             return node;
         }
