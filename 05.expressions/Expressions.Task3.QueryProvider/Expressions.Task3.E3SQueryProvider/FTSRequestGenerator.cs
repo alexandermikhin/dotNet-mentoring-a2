@@ -1,9 +1,9 @@
-﻿using Expressions.Task3.E3SQueryProvider.Attributes;
+﻿using System;
+using System.Collections.Generic;
+using Expressions.Task3.E3SQueryProvider.Attributes;
 using Expressions.Task3.E3SQueryProvider.Models.Request;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 
 namespace Expressions.Task3.E3SQueryProvider
 {
@@ -13,7 +13,7 @@ namespace Expressions.Task3.E3SQueryProvider
         private readonly string _baseAddress;
 
         #region Constructors
-        
+
         public FtsRequestGenerator(string baseAddress)
         {
             _baseAddress = baseAddress;
@@ -28,10 +28,13 @@ namespace Expressions.Task3.E3SQueryProvider
             return GenerateRequestUrl(typeof(T), query, start, limit);
         }
 
+        public Uri GenerateRequestUrl<T>(FtsQueryRequest ftsQueryRequest)
+        {
+            return GenerateRequestUrl(typeof(T), ftsQueryRequest);
+        }
+
         public Uri GenerateRequestUrl(Type type, string query = "*", int start = 0, int limit = 10)
         {
-            string metaTypeName = GetMetaTypeName(type);
-
             var ftsQueryRequest = new FtsQueryRequest
             {
                 Statements = new List<Statement>
@@ -43,6 +46,13 @@ namespace Expressions.Task3.E3SQueryProvider
                 Start = start,
                 Limit = limit
             };
+
+            return GenerateRequestUrl(type, ftsQueryRequest);
+        }
+
+        public Uri GenerateRequestUrl(Type type, FtsQueryRequest ftsQueryRequest)
+        {
+            string metaTypeName = GetMetaTypeName(type);
 
             var ftsQueryRequestString = JsonConvert.SerializeObject(ftsQueryRequest);
 

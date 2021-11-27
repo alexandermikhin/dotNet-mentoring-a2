@@ -1,24 +1,40 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using Expressions.Task3.E3SQueryProvider.Models.Request;
 
 namespace Expressions.Task3.E3SQueryProvider
 {
     public class ExpressionToFtsRequestTranslator : ExpressionVisitor
     {
         readonly StringBuilder _resultStringBuilder;
+        readonly List<string> _queries;
 
         public ExpressionToFtsRequestTranslator()
         {
             _resultStringBuilder = new StringBuilder();
+            _queries = new List<string>();
         }
 
         public string Translate(Expression exp)
         {
+            ClearBuffer();
             Visit(exp);
+            AddLatestQuery();
 
-            return _resultStringBuilder.ToString();
+            return string.Join(string.Empty, _queries);
+        }
+
+        public FtsQueryRequest CreateRequest(Expression exp)
+        {
+            ClearBuffer();
+            Visit(exp);
+            AddLatestQuery();
+            var request = BuildRequest();
+            
+            return request;
         }
 
         #region protected methods
@@ -34,7 +50,7 @@ namespace Expressions.Task3.E3SQueryProvider
                 return node;
             }
 
-            if(node.Method.DeclaringType == typeof(string))
+            if (node.Method.DeclaringType == typeof(string))
             {
                 ProcessStringMethod(node);
                 return node;
@@ -64,6 +80,12 @@ namespace Expressions.Task3.E3SQueryProvider
                         _resultStringBuilder.Append(")");
                     }
 
+                    break;
+                case ExpressionType.AndAlso:
+                    Visit(node.Left);
+                    AddLatestQuery();
+                    _resultStringBuilder.Clear();
+                    Visit(node.Right);
                     break;
 
                 default:
@@ -110,6 +132,25 @@ namespace Expressions.Task3.E3SQueryProvider
             }
 
             _resultStringBuilder.Append(")");
+        }
+
+        private void ClearBuffer()
+        {
+            _resultStringBuilder.Clear();
+            _queries.Clear();
+        }
+
+        private void AddLatestQuery()
+        {
+            _queries.Add(_resultStringBuilder.ToString());
+        }
+
+        private FtsQueryRequest BuildRequest()
+        {
+            return new FtsQueryRequest()
+            {
+                Statements = _queries.Select(q => new Statement() { Query = q }).ToList()
+            };
         }
 
         #endregion
