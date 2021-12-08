@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace ExpressionTrees.Task1.ExpressionsTransformer
@@ -9,12 +10,12 @@ namespace ExpressionTrees.Task1.ExpressionsTransformer
 
         public Expression Transform(Expression expression)
         {
-            return this.Transform(expression, null);
+            return Transform(expression, null);
         }
 
         public Expression Transform(Expression expression, IDictionary<string, object> keyValuePairs)
         {
-            this._keyValuePairs = null;
+            _keyValuePairs = keyValuePairs;
             var updatedExpression = Visit(expression);
             return updatedExpression;
 
@@ -22,37 +23,71 @@ namespace ExpressionTrees.Task1.ExpressionsTransformer
 
         protected override Expression VisitBinary(BinaryExpression node)
         {
-            Expression result = node;
-            switch (node.NodeType)
+            var incrementExpression = CreateIncDecExpression(node);
+            if (incrementExpression != null)
             {
-                case ExpressionType.Add:
-                    if (node.Left.NodeType == ExpressionType.Parameter && node.Right.NodeType == ExpressionType.Constant)
-                    {
-                        var constant = node.Right as ConstantExpression;
-                        if (constant.Value is int value && value == 1)
-                        {
-                            result = Expression.PostIncrementAssign(node.Left);
-                        }
-                    }
-
-                    break;
-                case ExpressionType.Subtract:
-                    if (node.Left.NodeType == ExpressionType.Parameter && node.Right.NodeType == ExpressionType.Constant)
-                    {
-                        var constant = node.Right as ConstantExpression;
-                        if (constant.Value is int value && value == 1)
-                        {
-                            result = Expression.PostDecrementAssign(node.Left);
-                        }
-                    }
-
-                    break;
-                default:
-                    result = node;
-                    break;
+                return incrementExpression;
             }
 
-            return result;
+            var updatedExpression = CreateExpressionWithReplacements(node);
+
+            return base.VisitBinary(updatedExpression);
+        }
+
+        private bool ParameterHasValue(ParameterExpression parameterExpression)
+        {
+            if (_keyValuePairs == null)
+            {
+                return false;
+            }
+
+            return _keyValuePairs.ContainsKey(parameterExpression.Name);
+        }
+
+        private object GetParameterValue(ParameterExpression parameterExpression)
+        {
+            if (!ParameterHasValue(parameterExpression))
+            {
+                throw new ArgumentException($"Provided parameter name ${parameterExpression.Name} does not exist.");
+            }
+
+            return _keyValuePairs[parameterExpression.Name];
+        }
+
+        private Expression CreateIncDecExpression(BinaryExpression node)
+        {
+            if (node.Left.NodeType == ExpressionType.Parameter && node.Right.NodeType == ExpressionType.Constant)
+            {
+                var parameter = node.Left as ParameterExpression;
+                var constant = node.Right as ConstantExpression;
+                if (!ParameterHasValue(parameter) && constant.Value is int value && value == 1)
+                {
+                    if (node.NodeType == ExpressionType.Add)
+                    {
+                        return Expression.PostIncrementAssign(node.Left);
+                    }
+
+                    if (node.NodeType == ExpressionType.Subtract)
+                    {
+                        return Expression.PostDecrementAssign(node.Left);
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private BinaryExpression CreateExpressionWithReplacements(BinaryExpression node)
+        {
+            var left = node.Left.NodeType == ExpressionType.Parameter && ParameterHasValue(node.Left as ParameterExpression)
+                ? Expression.Constant(GetParameterValue(node.Left as ParameterExpression))
+                : node.Left;
+
+            var right = node.Right.NodeType == ExpressionType.Parameter && ParameterHasValue(node.Right as ParameterExpression)
+                ? Expression.Constant(GetParameterValue(node.Right as ParameterExpression))
+                : node.Right;
+
+            return Expression.MakeBinary(node.NodeType, left, right);
         }
     }
 }
