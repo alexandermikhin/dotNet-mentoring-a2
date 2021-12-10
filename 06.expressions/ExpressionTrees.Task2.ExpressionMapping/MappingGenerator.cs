@@ -25,27 +25,19 @@ namespace ExpressionTrees.Task2.ExpressionMapping
 
         private IEnumerable<MemberBinding> GetMemberBindings<TSource, TDestination>(ParameterExpression sourceParam)
         {
-            var propertiesBindings = GetPropertiesBindings<TSource, TDestination>(sourceParam);
-            var fieldsBindings = GetFieldsBindings<TSource, TDestination>(sourceParam);
-
-            return propertiesBindings.Concat(fieldsBindings);
-        }
-
-        private IEnumerable<MemberBinding> GetPropertiesBindings<TSource, TDestination>(ParameterExpression sourceParam)
-        {
             var bindings = new List<MemberBinding>();
-            var sourceProperties = GetProperties<TSource>(p => p.CanRead);
-            var destinationProperties = GetProperties<TDestination>(p => p.CanWrite);
+            var sourceMemberInfos = GetMemberInfos<TSource>(p => p.CanRead);
+            var destinationMemberInfos = GetMemberInfos<TDestination>(p => p.CanWrite);
 
-            foreach (var sourceProperty in sourceProperties)
+            foreach (var sourceMemberInfo in sourceMemberInfos)
             {
-                var destinationProperty = destinationProperties.FirstOrDefault(p =>
-                    p.Name == sourceProperty.Name && p.PropertyType == sourceProperty.PropertyType);
+                var destinationMemberInfo = destinationMemberInfos.FirstOrDefault(p =>
+                    p.Name == sourceMemberInfo.Name);
 
-                if (destinationProperty != null)
+                if (destinationMemberInfo != null && TypesAreEqual(destinationMemberInfo, sourceMemberInfo))
                 {
-                    var memberExpression = Expression.PropertyOrField(sourceParam, sourceProperty.Name);
-                    var memberAssignment = Expression.Bind(destinationProperty, memberExpression);
+                    var memberExpression = Expression.PropertyOrField(sourceParam, sourceMemberInfo.Name);
+                    var memberAssignment = Expression.Bind(destinationMemberInfo, memberExpression);
                     bindings.Add(memberAssignment);
                 }
             }
@@ -53,26 +45,27 @@ namespace ExpressionTrees.Task2.ExpressionMapping
             return bindings;
         }
 
-        private IEnumerable<MemberBinding> GetFieldsBindings<TSource, TDestination>(ParameterExpression sourceParam)
+        private IEnumerable<MemberInfo> GetMemberInfos<T>(Func<PropertyInfo, bool> propertySelector)
         {
-            var bindings = new List<MemberBinding>();
-            var sourceFields = GetFields<TSource>();
-            var destinationFields = GetFields<TDestination>();
+            var fields = GetFields<T>();
+            var properties = GetProperties<T>(propertySelector);
 
-            foreach (var sourceField in sourceFields)
+            return fields.Cast<MemberInfo>().Concat(properties);
+        }
+
+        private bool TypesAreEqual(MemberInfo info1, MemberInfo info2)
+        {
+            if (info1.MemberType == MemberTypes.Field && info2.MemberType == MemberTypes.Field)
             {
-                var destinationField = destinationFields.FirstOrDefault(p =>
-                    p.Name == sourceField.Name && p.FieldType == sourceField.FieldType);
-
-                if (destinationField != null)
-                {
-                    var memberExpression = Expression.PropertyOrField(sourceParam, sourceField.Name);
-                    var memberAssignment = Expression.Bind(destinationField, memberExpression);
-                    bindings.Add(memberAssignment);
-                }
+                return (info1 as FieldInfo).FieldType == (info2 as FieldInfo).FieldType;
             }
 
-            return bindings;
+            if (info1.MemberType == MemberTypes.Property && info2.MemberType == MemberTypes.Property)
+            {
+                return (info1 as PropertyInfo).PropertyType == (info2 as PropertyInfo).PropertyType;
+            }
+
+            return false;
         }
 
         private IEnumerable<PropertyInfo> GetProperties<T>(Func<PropertyInfo, bool> propertySelector)
