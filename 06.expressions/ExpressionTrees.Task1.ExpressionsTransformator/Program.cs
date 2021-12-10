@@ -50,8 +50,6 @@ namespace ExpressionTrees.Task1.ExpressionsTransformer
         {
             var visitor = new IncDecExpressionVisitor();
             Expression<Func<int, double, double>> expression = (iVal, dVal) => (iVal - 1) + (dVal + 1) * (dVal - 1) - (iVal - 3) * Math.Sin(iVal) * Math.Cos(dVal);
-            //Expression<Func<int, double, int>> expression = (iVal, dVal) => (iVal - 1) + ((int)dVal + 1) * ((int)dVal - 1) - (iVal - 3) * (int)Math.Sin(iVal) * (int)Math.Cos(dVal);
-            ////Expression<Func<int, int>> expression = iVal => iVal + 1;
             var values = new Dictionary<string, object>() { { "iVal", 2 } };
             var decTransformResult = visitor.Transform(expression, values);
             Console.WriteLine("Value substitute operation expression");

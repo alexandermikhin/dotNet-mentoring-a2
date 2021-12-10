@@ -2,6 +2,18 @@
 {
     internal class Bar
     {
-        // add here some other properties
+        string _field;
+
+        public string commonField;
+
+        private double PropertyPrivate { get; set; }
+
+        public int Id { get; set; }
+
+        public string Label { get; set; }
+
+        public string Date { get; set; }
+
+        public int Year { get; }
     }
 }
