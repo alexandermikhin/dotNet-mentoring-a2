@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using ExpressionTrees.Task2.ExpressionMapping.Annotations;
 
 namespace ExpressionTrees.Task2.ExpressionMapping
 {
@@ -32,7 +33,7 @@ namespace ExpressionTrees.Task2.ExpressionMapping
             foreach (var sourceMemberInfo in sourceMemberInfos)
             {
                 var destinationMemberInfo = destinationMemberInfos.FirstOrDefault(p =>
-                    p.Name == sourceMemberInfo.Name);
+                    MemberInfoMatch(p, sourceMemberInfo));
 
                 if (destinationMemberInfo != null && TypesAreEqual(destinationMemberInfo, sourceMemberInfo))
                 {
@@ -76,6 +77,17 @@ namespace ExpressionTrees.Task2.ExpressionMapping
         private IEnumerable<FieldInfo> GetFields<T>()
         {
             return typeof(T).GetFields();
+        }
+
+        private bool MemberInfoMatch(MemberInfo destination, MemberInfo source)
+        {
+            if (destination.GetCustomAttribute<IgnoreAttribute>() != null ||
+                source.GetCustomAttribute<IgnoreAttribute>() != null)
+            {
+                return false;
+            }
+
+            return destination.Name == source.Name;
         }
     }
 }
