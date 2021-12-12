@@ -52,7 +52,7 @@ namespace ExpressionTrees.Task2.ExpressionMapping
                         if (converter != null)
                         {
                             memberExpression = Expression.Call(Expression.Constant(converter), 
-                                typeof(IMappingConverter).GetMethod("Convert"),
+                                typeof(IMappingConverter).GetMethod(nameof(IMappingConverter.Convert)),
                                 memberExpression);
 
                             var destinationType = GetMemberInfoType(destinationMemberInfo);
