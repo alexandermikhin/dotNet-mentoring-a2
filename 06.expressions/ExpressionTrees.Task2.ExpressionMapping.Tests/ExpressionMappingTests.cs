@@ -64,5 +64,21 @@ namespace ExpressionTrees.Task2.ExpressionMapping.Tests
             Assert.AreEqual(default, res.BarIgnored);
             Assert.AreEqual(default, res.FooIgnored);
         }
+
+        [TestMethod]
+        public void Map_UsesSourceMemberAttribute_IfPresent()
+        {
+            var foo = new Foo() { FooOnly = 123 };
+            var res = _mapper.Map(foo);
+            Assert.AreEqual(123, res.BarOnly);
+        }
+
+        [TestMethod]
+        public void Map_UsesDestinationMemberAttribute_IfPresent()
+        {
+            var foo = new Foo() { SourceFoo = 456 };
+            var res = _mapper.Map(foo);
+            Assert.AreEqual(456, res.DestinationBar);
+        }
     }
 }

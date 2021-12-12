@@ -87,6 +87,18 @@ namespace ExpressionTrees.Task2.ExpressionMapping
                 return false;
             }
 
+            var destinationAttribute = source.GetCustomAttribute<DestinationMemberAttribute>();
+            if (destinationAttribute != null)
+            {
+                return destination.Name == destinationAttribute.Name;
+            }
+
+            var sourceAttribute = destination.GetCustomAttribute<SourceMemberAttribute>();
+            if (sourceAttribute != null)
+            {
+                return source.Name == sourceAttribute.Name;
+            }
+
             return destination.Name == source.Name;
         }
     }

@@ -22,5 +22,10 @@ namespace ExpressionTrees.Task2.ExpressionMapping.Tests.Models
         public string BarIgnored { get; set; }
 
         public string FooIgnored { get; set; }
+
+        [SourceMember("FooOnly")]
+        public int BarOnly { get; set; }
+
+        public int DestinationBar { get; set; }
     }
 }
