@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using ExpressionTrees.Task2.ExpressionMapping.Annotations;
 
 namespace ExpressionTrees.Task2.ExpressionMapping.Tests.Models
@@ -29,5 +30,10 @@ namespace ExpressionTrees.Task2.ExpressionMapping.Tests.Models
 
         [DestinationMember("DestinationBar")]
         public int SourceFoo { get; set; }
+
+        [DestinationMember("Sum")]
+        public string Sum { get; set; }
+
+        public string Count { get; set; }
     }
 }

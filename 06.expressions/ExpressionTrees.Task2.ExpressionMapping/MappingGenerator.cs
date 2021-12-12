@@ -9,6 +9,15 @@ namespace ExpressionTrees.Task2.ExpressionMapping
 {
     public class MappingGenerator
     {
+        GeneratorParameters _parameters;
+
+        public MappingGenerator() { }
+
+        public MappingGenerator(GeneratorParameters parameters)
+        {
+            _parameters = parameters;
+        }
+
         public Mapper<TSource, TDestination> Generate<TSource, TDestination>()
         {
             var sourceParam = Expression.Parameter(typeof(TSource));
@@ -32,14 +41,27 @@ namespace ExpressionTrees.Task2.ExpressionMapping
 
             foreach (var sourceMemberInfo in sourceMemberInfos)
             {
-                var destinationMemberInfo = destinationMemberInfos.FirstOrDefault(p =>
-                    MemberInfoMatch(p, sourceMemberInfo));
+                var destinationMemberInfo = destinationMemberInfos.FirstOrDefault(p => MemberInfoMatch(p, sourceMemberInfo));
 
-                if (destinationMemberInfo != null && TypesAreEqual(destinationMemberInfo, sourceMemberInfo))
+                if (destinationMemberInfo != null)
                 {
-                    var memberExpression = Expression.PropertyOrField(sourceParam, sourceMemberInfo.Name);
-                    var memberAssignment = Expression.Bind(destinationMemberInfo, memberExpression);
-                    bindings.Add(memberAssignment);
+                    var converter = GetConverter(sourceMemberInfo);
+                    if (converter != null || TypesAreEqual(destinationMemberInfo, sourceMemberInfo))
+                    {
+                        Expression memberExpression = Expression.PropertyOrField(sourceParam, sourceMemberInfo.Name);
+                        if (converter != null)
+                        {
+                            memberExpression = Expression.Call(Expression.Constant(converter), 
+                                typeof(IMappingConverter).GetMethod("Convert"),
+                                memberExpression);
+
+                            var destinationType = GetMemberInfoType(destinationMemberInfo);
+                            memberExpression = Expression.ConvertChecked(memberExpression, destinationType);
+                        }
+
+                        var memberAssignment = Expression.Bind(destinationMemberInfo, memberExpression);
+                        bindings.Add(memberAssignment);
+                    }
                 }
             }
 
@@ -56,17 +78,20 @@ namespace ExpressionTrees.Task2.ExpressionMapping
 
         private bool TypesAreEqual(MemberInfo info1, MemberInfo info2)
         {
-            if (info1.MemberType == MemberTypes.Field && info2.MemberType == MemberTypes.Field)
-            {
-                return (info1 as FieldInfo).FieldType == (info2 as FieldInfo).FieldType;
-            }
+            return GetMemberInfoType(info1) == GetMemberInfoType(info2);
+        }
 
-            if (info1.MemberType == MemberTypes.Property && info2.MemberType == MemberTypes.Property)
+        private Type GetMemberInfoType(MemberInfo memberInfo)
+        {
+            switch (memberInfo.MemberType)
             {
-                return (info1 as PropertyInfo).PropertyType == (info2 as PropertyInfo).PropertyType;
+                case MemberTypes.Field:
+                    return (memberInfo as FieldInfo).FieldType;
+                case MemberTypes.Property:
+                    return (memberInfo as PropertyInfo).PropertyType;
+                default:
+                    throw new ArgumentException("Member type is not suppoerted.");
             }
-
-            return false;
         }
 
         private IEnumerable<PropertyInfo> GetProperties<T>(Func<PropertyInfo, bool> propertySelector)
@@ -100,6 +125,26 @@ namespace ExpressionTrees.Task2.ExpressionMapping
             }
 
             return destination.Name == source.Name;
+        }
+
+        private IMappingConverter GetConverter(MemberInfo memberInfo)
+        {
+            if (_parameters == null)
+            {
+                return null;
+            }
+
+            IMappingConverter converter = null;
+            if (_parameters.DestinationConverters != null && _parameters.DestinationConverters.ContainsKey(memberInfo.Name))
+            {
+                converter = _parameters.DestinationConverters[memberInfo.Name];
+            }
+            else if (_parameters.SourceConverters != null && _parameters.SourceConverters.ContainsKey(memberInfo.Name))
+            {
+                converter = _parameters.SourceConverters[memberInfo.Name];
+            }
+
+            return converter;
         }
     }
 }

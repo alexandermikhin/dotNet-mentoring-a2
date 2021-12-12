@@ -27,5 +27,10 @@ namespace ExpressionTrees.Task2.ExpressionMapping.Tests.Models
         public int BarOnly { get; set; }
 
         public int DestinationBar { get; set; }
+
+        public double Sum { get; set; }
+
+        [SourceMember("Count")]
+        public double Count { get; set; }
     }
 }
