@@ -29,9 +29,23 @@ namespace ExpressionTrees.Task1.ExpressionsTransformer
                 return incrementExpression;
             }
 
-            var updatedExpression = CreateExpressionWithReplacements(node);
+            return base.VisitBinary(node);
+        }
 
-            return base.VisitBinary(updatedExpression);
+        protected override Expression VisitLambda<T>(Expression<T> expression)
+        {
+            var updatedExpressionBody = Visit(expression.Body);
+            return Expression.Lambda(updatedExpressionBody, expression.Parameters);
+        }
+
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            if (ParameterHasValue(node))
+            {
+                return Expression.Constant(GetParameterValue(node));
+            }
+
+            return base.VisitParameter(node);
         }
 
         private bool ParameterHasValue(ParameterExpression parameterExpression)
@@ -75,19 +89,6 @@ namespace ExpressionTrees.Task1.ExpressionsTransformer
             }
 
             return null;
-        }
-
-        private BinaryExpression CreateExpressionWithReplacements(BinaryExpression node)
-        {
-            var left = node.Left.NodeType == ExpressionType.Parameter && ParameterHasValue(node.Left as ParameterExpression)
-                ? Expression.Constant(GetParameterValue(node.Left as ParameterExpression))
-                : node.Left;
-
-            var right = node.Right.NodeType == ExpressionType.Parameter && ParameterHasValue(node.Right as ParameterExpression)
-                ? Expression.Constant(GetParameterValue(node.Right as ParameterExpression))
-                : node.Right;
-
-            return Expression.MakeBinary(node.NodeType, left, right);
         }
     }
 }
