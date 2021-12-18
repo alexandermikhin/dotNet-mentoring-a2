@@ -1,4 +1,6 @@
-﻿namespace ExpressionTrees.Task2.ExpressionMapping.Tests.Models
+﻿using ExpressionTrees.Task2.ExpressionMapping.Annotations;
+
+namespace ExpressionTrees.Task2.ExpressionMapping.Tests.Models
 {
     internal class Bar
     {
@@ -15,5 +17,20 @@
         public string Date { get; set; }
 
         public int Year { get; }
+
+        [Ignore]
+        public string BarIgnored { get; set; }
+
+        public string FooIgnored { get; set; }
+
+        [SourceMember("FooOnly")]
+        public int BarOnly { get; set; }
+
+        public int DestinationBar { get; set; }
+
+        public double Sum { get; set; }
+
+        [SourceMember("Count")]
+        public double Count { get; set; }
     }
 }
