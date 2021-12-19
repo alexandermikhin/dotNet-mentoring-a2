@@ -6,10 +6,16 @@ namespace Composite
     {
         static void Main(string[] args)
         {
+            var input = new InputText("myInput", "myInputValue");
+            var label = new LabelText("myLabel");
+            var form = new Form("myForm");
+            form.AddComponent(input);
+            form.AddComponent(label);
             var elements = new Element[]
             {
-                new InputText("myInput", "myInputValue"),
-                new LabelText("myLabel"),
+                input,
+                label,
+                form,
             };
 
             foreach (var element in elements)
