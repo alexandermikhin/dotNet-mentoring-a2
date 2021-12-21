@@ -2,20 +2,25 @@
 
 namespace StockExchange.Task1
 {
-    public class RedSocks
+    public class RedSocks: IPlayer
     {
-        public RedSocks()
+        Players players;
+
+        public string Name => "RedSocks";
+
+        public RedSocks(Players players)
         {
+            this.players = players;
         }
 
         public bool SellOffer(string stockName, int numberOfShares)
         {
-            throw new NotImplementedException();
+            return players.SellOffer(this, stockName, numberOfShares);
         }
 
         public bool BuyOffer(string stockName, int numberOfShares)
         {
-            throw new NotImplementedException();
+            return players.BuyOffer(this, stockName, numberOfShares);
         }
     }
 }
