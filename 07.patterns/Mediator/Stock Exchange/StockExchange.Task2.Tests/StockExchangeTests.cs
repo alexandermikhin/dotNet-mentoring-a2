@@ -9,6 +9,7 @@ namespace StockExchange.Task2.Tests
         StockPlayersFactory playersFactory;
         RedSocks redSocks;
         Blossomers blossomers;
+        RossStones rossStones;
 
         [TestInitialize]
         public void Startup()
@@ -19,6 +20,7 @@ namespace StockExchange.Task2.Tests
 
             redSocks = players.RedSocks;
             blossomers = players.Blossomers;
+            rossStones = players.RossStones;
         }
 
         [TestMethod]
@@ -26,6 +28,7 @@ namespace StockExchange.Task2.Tests
         {
             redSocks.BuyOffer("MSC", 3).Should().BeFalse();
             blossomers.BuyOffer("RTC", 2).Should().BeFalse();
+            rossStones.BuyOffer("UTC", 1).Should().BeFalse();
         }
 
         [TestMethod]
@@ -33,6 +36,7 @@ namespace StockExchange.Task2.Tests
         {
             redSocks.SellOffer("MSC", 3).Should().BeFalse();
             blossomers.SellOffer("RTC", 3).Should().BeFalse();
+            rossStones.SellOffer("UTC", 1).Should().BeFalse();
         }
 
         [TestMethod]
@@ -43,10 +47,24 @@ namespace StockExchange.Task2.Tests
         }
 
         [TestMethod]
+        public void RossStones_should_not_buy_own_shares()
+        {
+            rossStones.SellOffer("RTC", 2).Should().BeFalse();
+            rossStones.BuyOffer("RTC", 2).Should().BeFalse();
+        }
+
+        [TestMethod]
         public void Blossomers_should_not_sell_own_shares()
         {
             redSocks.BuyOffer("RTC", 2).Should().BeFalse();
             redSocks.SellOffer("RTC", 2).Should().BeFalse();
+        }
+
+        [TestMethod]
+        public void RossStones_should_not_sell_own_shares()
+        {
+            rossStones.BuyOffer("RTC", 2).Should().BeFalse();
+            rossStones.SellOffer("RTC", 2).Should().BeFalse();
         }
 
         [TestMethod]

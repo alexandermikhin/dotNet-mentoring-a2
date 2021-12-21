@@ -1,21 +1,9 @@
-﻿using System;
-
-namespace StockExchange.Task2
+﻿namespace StockExchange.Task2
 {
-    public class Blossomers
+    public class Blossomers : Player
     {
-        public Blossomers() 
-        { 
-        }
-
-        public bool SellOffer(string stockName, int numberOfShares)
+        public Blossomers(string name, Players players) : base(name, players)
         {
-            throw new NotImplementedException();
-        }
-
-        public bool BuyOffer(string stockName, int numberOfShares)
-        {
-            throw new NotImplementedException();
         }
     }
 }
