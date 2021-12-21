@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace StockExchange.Task1
 {
@@ -23,76 +22,41 @@ namespace StockExchange.Task1
 
         internal bool SellOffer(Player player, string stockName, int numberOfShares)
         {
-            switch (player.Name)
+            var result = false;
+            var buyRequests = player.Name == "RedSocks" ? blossomersRequests.BuyRequests : redSocksRequests.BuyRequests;
+            var offer = buyRequests.Find(r => r.Name == stockName && r.SharesNumber == numberOfShares);
+            if (offer != null)
             {
-                case "RedSocks":
-                    {
-                        var offer = blossomersRequests.BuyRequests.Find(r => r.Name == stockName && r.SharesNumber == numberOfShares);
-                        if (offer != null)
-                        {
-                            blossomersRequests.BuyRequests.Remove(offer);
-                            return true;
-                        }
-                        else
-                        {
-                            redSocksRequests.SellRequests.Add(new Offer() { Name = stockName, SharesNumber = numberOfShares });
-                            return false;
-                        }
-                    }
-                case "Blossomers":
-                    {
-                        var offer = redSocksRequests.BuyRequests.Find(r => r.Name == stockName && r.SharesNumber == numberOfShares);
-                        if (offer != null)
-                        {
-                            redSocksRequests.BuyRequests.Remove(offer);
-                            return true;
-                        }
-                        else
-                        {
-                            blossomersRequests.SellRequests.Add(new Offer() { Name = stockName, SharesNumber = numberOfShares });
-                            return false;
-                        }
-                    }
-                default:
-                    throw new ArgumentException("Provided seller " + player.Name + " is not defined.");
+                buyRequests.Remove(offer);
+                result = true;
             }
+            else
+            {
+                var sellRequests = player.Name == "RedSocks" ? redSocksRequests.SellRequests : blossomersRequests.SellRequests;
+                sellRequests.Add(new Offer() { Name = stockName, SharesNumber = numberOfShares });
+            }
+
+            return result;
         }
 
         internal bool BuyOffer(Player player, string stockName, int numberOfShares)
+
         {
-            switch (player.Name)
+            var result = false;
+            var sellRequests = player.Name == RedSocks.Name ? blossomersRequests.SellRequests : redSocksRequests.SellRequests;
+            var offer = sellRequests.Find(r => r.Name == stockName && r.SharesNumber == numberOfShares);
+            if (offer != null)
             {
-                case "RedSocks":
-                    {
-                        var offer = blossomersRequests.SellRequests.Find(r => r.Name == stockName && r.SharesNumber == numberOfShares);
-                        if (offer != null)
-                        {
-                            blossomersRequests.SellRequests.Remove(offer);
-                            return true;
-                        }
-                        else
-                        {
-                            redSocksRequests.BuyRequests.Add(new Offer() { Name = stockName, SharesNumber = numberOfShares });
-                            return false;
-                        }
-                    }
-                case "Blossomers":
-                    {
-                        var offer = redSocksRequests.SellRequests.Find(r => r.Name == stockName && r.SharesNumber == numberOfShares);
-                        if (offer != null)
-                        {
-                            redSocksRequests.SellRequests.Remove(offer);
-                            return true;
-                        }
-                        else
-                        {
-                            blossomersRequests.BuyRequests.Add(new Offer() { Name = stockName, SharesNumber = numberOfShares });
-                            return false;
-                        }
-                    }
-                default:
-                    throw new ArgumentException("Provided buyer " + player.Name + " is not defined.");
+                sellRequests.Remove(offer);
+                result = true;
             }
+            else
+            {
+                var buyRequests = player.Name == RedSocks.Name ? redSocksRequests.BuyRequests : blossomersRequests.BuyRequests;
+                buyRequests.Add(new Offer() { Name = stockName, SharesNumber = numberOfShares });
+            }
+
+            return result;
         }
 
         class Offer
