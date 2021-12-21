@@ -1,26 +1,9 @@
-﻿using System;
-
-namespace StockExchange.Task1
+﻿namespace StockExchange.Task1
 {
-    public class Blossomers : IPlayer
+    public class Blossomers : Player
     {
-        Players players;
-
-        public string Name => "Blossomers";
-
-        public Blossomers(Players players) 
+        public Blossomers(string name,  Players players): base(name, players)
         {
-            this.players = players;
-        }
-
-        public bool SellOffer(string stockName, int numberOfShares)
-        {
-            return players.SellOffer(this, stockName, numberOfShares);
-        }
-
-        public bool BuyOffer(string stockName, int numberOfShares)
-        {
-            return players.BuyOffer(this, stockName, numberOfShares);
         }
     }
 }

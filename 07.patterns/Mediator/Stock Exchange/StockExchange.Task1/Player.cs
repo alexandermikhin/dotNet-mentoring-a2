@@ -1,13 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace StockExchange.Task1
+﻿namespace StockExchange.Task1
 {
-    interface IPlayer
+    public abstract class Player
     {
+        readonly Players players;
+
         public string Name { get; }
-        public bool SellOffer(string stockName, int numberOfShares);
-        public bool BuyOffer(string stockName, int numberOfShares);
+
+        internal Player(string name, Players players)
+        {
+            Name = name;
+            this.players = players;
+        }
+
+        public bool SellOffer(string stockName, int numberOfShares)
+        {
+            return players.SellOffer(this, stockName, numberOfShares);
+        }
+
+        public bool BuyOffer(string stockName, int numberOfShares)
+        {
+            return players.BuyOffer(this, stockName, numberOfShares);
+        }
     }
 }

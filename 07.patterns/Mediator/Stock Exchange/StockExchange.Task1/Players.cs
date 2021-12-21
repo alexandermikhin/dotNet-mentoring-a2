@@ -21,7 +21,7 @@ namespace StockExchange.Task1
             Blossomers = blossomers;
         }
 
-        internal bool SellOffer(IPlayer player, string stockName, int numberOfShares)
+        internal bool SellOffer(Player player, string stockName, int numberOfShares)
         {
             switch (player.Name)
             {
@@ -58,7 +58,7 @@ namespace StockExchange.Task1
             }
         }
 
-        internal bool BuyOffer(IPlayer player, string stockName, int numberOfShares)
+        internal bool BuyOffer(Player player, string stockName, int numberOfShares)
         {
             switch (player.Name)
             {
