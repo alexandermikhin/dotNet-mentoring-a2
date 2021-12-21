@@ -1,25 +1,9 @@
-﻿using System;
-
-namespace StockExchange.Task3
+﻿namespace StockExchange.Task3
 {
-    public class RedSocks
+    public class RedSocks: Player
     {
-        public int SoldShares { get; }
-
-        public int BoughtShares { get; }
-
-        public RedSocks()
+        public RedSocks(string name, Players players): base(name, players)
         {
-        }
-
-        public bool SellOffer(string stockName, int numberOfShares)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool BuyOffer(string stockName, int numberOfShares)
-        {
-            throw new NotImplementedException();
         }
     }
 }

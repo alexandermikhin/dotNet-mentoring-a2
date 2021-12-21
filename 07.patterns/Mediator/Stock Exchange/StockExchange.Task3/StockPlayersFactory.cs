@@ -4,11 +4,11 @@
     {
         public Players CreatePlayers()
         {
-            return new Players
-            {
-                RedSocks = new RedSocks(),
-                Blossomers = new Blossomers()
-            };
+            var players = new Players();
+            players.RedSocks = new RedSocks("RedSocks", players);
+            players.Blossomers = new Blossomers("Blossomers", players);
+
+            return players;
         }
     }
 }
