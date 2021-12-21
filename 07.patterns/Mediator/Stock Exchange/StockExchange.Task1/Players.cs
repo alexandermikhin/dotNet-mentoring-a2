@@ -7,8 +7,8 @@ namespace StockExchange.Task1
         public RedSocks RedSocks { get; set; }
         public Blossomers Blossomers { get; set; }
 
-        readonly Requests redSocksRequests = new Requests();
-        readonly Requests blossomersRequests = new Requests();
+        readonly List<Offer> sellOffers = new List<Offer>();
+        readonly List<Offer> buyOffers = new List<Offer>();
 
         public Players()
         { 
@@ -23,17 +23,15 @@ namespace StockExchange.Task1
         internal bool SellOffer(Player player, string stockName, int numberOfShares)
         {
             var result = false;
-            var buyRequests = player.Name == "RedSocks" ? blossomersRequests.BuyRequests : redSocksRequests.BuyRequests;
-            var offer = buyRequests.Find(r => r.Name == stockName && r.SharesNumber == numberOfShares);
+            var offer = buyOffers.Find(r => r.From != player.Name && r.Name == stockName && r.SharesNumber == numberOfShares);
             if (offer != null)
             {
-                buyRequests.Remove(offer);
+                buyOffers.Remove(offer);
                 result = true;
             }
             else
             {
-                var sellRequests = player.Name == "RedSocks" ? redSocksRequests.SellRequests : blossomersRequests.SellRequests;
-                sellRequests.Add(new Offer() { Name = stockName, SharesNumber = numberOfShares });
+                sellOffers.Add(new Offer() { From = player.Name, Name = stockName, SharesNumber = numberOfShares });
             }
 
             return result;
@@ -43,17 +41,15 @@ namespace StockExchange.Task1
 
         {
             var result = false;
-            var sellRequests = player.Name == RedSocks.Name ? blossomersRequests.SellRequests : redSocksRequests.SellRequests;
-            var offer = sellRequests.Find(r => r.Name == stockName && r.SharesNumber == numberOfShares);
+            var offer = sellOffers.Find(r => r.From != player.Name && r.Name == stockName && r.SharesNumber == numberOfShares);
             if (offer != null)
             {
-                sellRequests.Remove(offer);
+                sellOffers.Remove(offer);
                 result = true;
             }
             else
             {
-                var buyRequests = player.Name == RedSocks.Name ? redSocksRequests.BuyRequests : blossomersRequests.BuyRequests;
-                buyRequests.Add(new Offer() { Name = stockName, SharesNumber = numberOfShares });
+                buyOffers.Add(new Offer() { From = player.Name, Name = stockName, SharesNumber = numberOfShares });
             }
 
             return result;
@@ -61,17 +57,9 @@ namespace StockExchange.Task1
 
         class Offer
         {
+            public string From { get; set; }
             public string Name { get; set; }
             public int SharesNumber { get; set; }
-        }
-
-        class Requests
-        {
-            readonly List<Offer> buyRequests = new List<Offer>();
-            readonly List<Offer> sellRequests = new List<Offer>();
-
-            public List<Offer> BuyRequests => buyRequests;
-            public List<Offer> SellRequests => sellRequests;
         }
     }
 }
