@@ -1,12 +1,10 @@
-﻿using System;
-
-namespace Calculator.Task4
+﻿namespace Calculator.Task4
 {
     public class CalculatorFactory : ICalculatorFactory
     {
-        private ICurrencyService currencyService;
-        private ITripRepository tripRepository;
-        private ILogger logger;
+        private readonly ICurrencyService currencyService;
+        private readonly ITripRepository tripRepository;
+        private readonly ILogger logger;
 
         public CalculatorFactory(
             ICurrencyService currencyService,
@@ -25,7 +23,23 @@ namespace Calculator.Task4
 
         public ICalculator CreateCalculator(bool withLogging, bool withCaching, bool withRounding)
         {
-            throw new NotImplementedException();
+            ICalculator calculator = CreateCalculator();
+            if (withLogging)
+            {
+                calculator = new LoggingCalculatorDecorator(calculator, logger);
+            }
+
+            if (withCaching)
+            {
+                calculator = new CachedPaymentDecorator(calculator);
+            }
+
+            if (withRounding)
+            {
+                calculator = new RoundingCalculatorDecorator(calculator);
+            }
+
+            return calculator;
         }
     }
 }
