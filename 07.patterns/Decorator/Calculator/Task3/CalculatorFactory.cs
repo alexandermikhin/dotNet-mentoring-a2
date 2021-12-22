@@ -2,9 +2,9 @@
 {
     public class CalculatorFactory : ICalculatorFactory
     {
-        private ICurrencyService currencyService;
-        private ITripRepository tripRepository;
-        private ILogger logger;
+        private readonly ICurrencyService currencyService;
+        private readonly ITripRepository tripRepository;
+        private readonly ILogger logger;
 
         public CalculatorFactory(
             ICurrencyService currencyService,
@@ -18,7 +18,7 @@
 
         public ICalculator CreateCachedCalculator()
         {
-            return new CachedPaymentDecorator();
+            return new CachedPaymentDecorator(CreateCalculator());
         }
 
         public ICalculator CreateCalculator()
@@ -28,12 +28,12 @@
 
         public ICalculator CreateLoggingCalculator()
         {
-            return new LoggingCalculatorDecorator();
+            return new LoggingCalculatorDecorator(CreateCalculator(), logger);
         }
 
         public ICalculator CreateRoundingCalculator()
         {
-            return new RoundingCalculatorDecorator();
+            return new RoundingCalculatorDecorator(CreateCalculator());
         }
     }
 }

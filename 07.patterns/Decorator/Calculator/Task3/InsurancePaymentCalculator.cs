@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Calculator.Task3
 {
     public class InsurancePaymentCalculator : ICalculator
     {
-        private ICurrencyService currencyService;
-        private ITripRepository tripRepository;
+        private readonly ICurrencyService currencyService;
+        private readonly ITripRepository tripRepository;
 
         public InsurancePaymentCalculator(
             ICurrencyService currencyService,
@@ -17,43 +18,82 @@ namespace Calculator.Task3
 
         public decimal CalculatePayment(string touristName)
         {
-            throw new NotImplementedException();
+            var tripDetails = tripRepository.LoadTrip(touristName);
+            var rate = currencyService.LoadCurrencyRate();
+
+            return Constants.A * rate * tripDetails.FlyCost +
+                Constants.B * rate * tripDetails.AccomodationCost +
+                Constants.C * rate * tripDetails.ExcursionCost;
         }
     }
 
-    public class RoundingCalculatorDecorator : ICalculator
+    public abstract class BaseCalculatorDecorator: ICalculator
     {
-        public RoundingCalculatorDecorator()
+        protected ICalculator calculator;
+
+        public BaseCalculatorDecorator(ICalculator calculator)
         {
+            this.calculator = calculator;
         }
 
-        public decimal CalculatePayment(string touristName)
+        public virtual decimal CalculatePayment(string touristName)
         {
-            throw new NotImplementedException();
+            return calculator.CalculatePayment(touristName);
         }
     }
 
-    public class LoggingCalculatorDecorator : ICalculator
+    public class RoundingCalculatorDecorator : BaseCalculatorDecorator
     {
-        public LoggingCalculatorDecorator()
+        readonly int rounding;
+
+        public RoundingCalculatorDecorator(ICalculator calculator): base(calculator)
         {
+            rounding = 0;
         }
 
-        public decimal CalculatePayment(string touristName)
+        public override decimal CalculatePayment(string touristName)
         {
-            throw new NotImplementedException();
+            var payment = base.CalculatePayment(touristName);
+            return Math.Round(payment, rounding);
         }
     }
 
-    public class CachedPaymentDecorator : ICalculator
+    public class LoggingCalculatorDecorator: BaseCalculatorDecorator
     {
-        public CachedPaymentDecorator()
+        readonly ILogger logger;
+
+        public LoggingCalculatorDecorator(ICalculator calculator, ILogger logger): base(calculator)
+        {
+            this.logger = logger;
+        }
+
+        public override decimal CalculatePayment(string touristName)
+        {
+            logger.Log("Start");
+            var payment = base.CalculatePayment(touristName);
+            logger.Log("End");
+
+            return payment;
+        }
+    }
+
+    public class CachedPaymentDecorator : BaseCalculatorDecorator
+    {
+        readonly Dictionary<string, decimal> paymentsCache = new Dictionary<string, decimal>();
+
+        public CachedPaymentDecorator(ICalculator calculator): base(calculator)
         {
         }
 
-        public decimal CalculatePayment(string touristName)
+        public override decimal CalculatePayment(string touristName)
         {
-            throw new NotImplementedException();
+            if (!paymentsCache.TryGetValue(touristName, out var payment))
+            {
+                payment = base.CalculatePayment(touristName);
+                paymentsCache.Add(touristName, payment);
+            }
+
+            return payment;
         }
     }
 }
