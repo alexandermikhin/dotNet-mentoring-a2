@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Calculator.Task1
+﻿namespace Calculator.Task1
 {
     public class InsurancePaymentCalculator : ICalculator
     {

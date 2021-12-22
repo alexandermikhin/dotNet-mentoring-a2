@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Calculator.Task2
 {
     public class InsurancePaymentCalculator : ICalculator
     {
-        private ICurrencyService currencyService;
-        private ITripRepository tripRepository;
+        private readonly ICurrencyService currencyService;
+        private readonly ITripRepository tripRepository;
 
         public InsurancePaymentCalculator(
             ICurrencyService currencyService,
@@ -18,19 +17,34 @@ namespace Calculator.Task2
 
         public decimal CalculatePayment(string touristName)
         {
-            throw new NotImplementedException();
+            var tripDetails = tripRepository.LoadTrip(touristName);
+            var rate = currencyService.LoadCurrencyRate();
+
+            return Constants.A * rate * tripDetails.FlyCost +
+                Constants.B * rate * tripDetails.AccomodationCost +
+                Constants.C * rate * tripDetails.ExcursionCost;
         }
     }
 
     public class CachedInsurancePaymentCalculator : ICalculator
     {
-        public CachedInsurancePaymentCalculator()
+        readonly ICalculator calculator;
+        readonly Dictionary<string, decimal> paymentsCache = new Dictionary<string, decimal>();
+
+        public CachedInsurancePaymentCalculator(ICalculator calculator)
         {
+            this.calculator = calculator;
         }
 
         public decimal CalculatePayment(string touristName)
         {
-            throw new NotImplementedException();
+            if (!paymentsCache.TryGetValue(touristName, out var payment))
+            {
+                payment = calculator.CalculatePayment(touristName);
+                paymentsCache.Add(touristName, payment);
+            }
+
+            return payment;
         }
     }
 }
