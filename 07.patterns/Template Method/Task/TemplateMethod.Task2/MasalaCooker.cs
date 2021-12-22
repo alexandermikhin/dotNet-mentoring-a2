@@ -14,7 +14,21 @@ namespace TemplateMethod.Task2
 
         public void CookMasala(Country country)
         {
-            throw new NotImplementedException();
+            CookerBase baseCooker = null;
+            switch (country)
+            {
+                case Country.India:
+                    baseCooker = new IndiaCooker();
+                    break;
+                case Country.Ukraine:
+                    baseCooker = new UkraineCooker();
+                    break;
+            }
+
+            if (baseCooker != null)
+            {
+                baseCooker.CookMasala(cooker);
+            }
         }
     }
 }
