@@ -5,11 +5,14 @@ using RetailEquity.Model;
 
 namespace RetailEquity.Banks
 {
-    internal class Barclays : IFilter
+    internal class DeutcheBank : IFilter
     {
         public IEnumerable<Trade> Match(IEnumerable<Trade> trades)
         {
-            return trades.Where(t => t.Type == TradeType.Option && t.SubType == TradeSubType.NyOption && t.Amount > 50);
+            return trades.Where(t => t.Type == TradeType.Option
+                && t.SubType == TradeSubType.NewOption
+                && t.Amount > 90
+                && t.Amount < 120);
         }
     }
 }

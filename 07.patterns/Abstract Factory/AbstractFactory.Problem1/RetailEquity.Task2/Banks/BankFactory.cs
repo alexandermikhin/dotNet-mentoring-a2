@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 using RetailEquity.Filters;
 
 namespace RetailEquity.Banks
@@ -12,6 +14,7 @@ namespace RetailEquity.Banks
                 Bank.Bofa => new BofaBank(),
                 Bank.Connacord => new ConnacordBank(),
                 Bank.Barclays => new Barclays(),
+                Bank.DeutscheBank => new DeutcheBank(),
                 _ => throw new ArgumentException(string.Format("Provided bank \"{0}\" is not suppoerted", bank)),
             };
         }

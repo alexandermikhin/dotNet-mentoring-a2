@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using RetailEquity.Model;
-using RetailEquity.Task1.Banks;
+using RetailEquity.Banks;
 
 namespace RetailEquity
 {
     public class TradeFilter
     {
-        BankFactory factory = new BankFactory();
+        readonly BankFactory factory = new BankFactory();
+
         public IEnumerable<Trade> FilterForBank(IEnumerable<Trade> trades, Bank bank)
         {
             var filter = factory.CreateBank(bank);
