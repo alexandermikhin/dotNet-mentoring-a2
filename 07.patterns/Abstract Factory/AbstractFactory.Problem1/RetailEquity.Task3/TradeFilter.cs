@@ -1,16 +1,18 @@
-﻿using RetailEquity.Model;
+﻿using System.Collections.Generic;
+using RetailEquity.Banks;
+using RetailEquity.Model;
 using RetailEquity.Task3;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace RetailEquity
 {
     public class TradeFilter
     {
-        public IEnumerable<Trade> FilterForBank(IEnumerable<Trade> trades, Bank bank, Country country)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+        readonly BankFactory factory = new BankFactory();
+
+        public IEnumerable<Trade> FilterForBank(IEnumerable<Trade> trades, Bank bank, Country country)
         {
-            throw new Exception("Unsupported bank");
+            var filter = factory.CreateBank(bank, country);
+            return filter.Match(trades);
         }
     }
 }
