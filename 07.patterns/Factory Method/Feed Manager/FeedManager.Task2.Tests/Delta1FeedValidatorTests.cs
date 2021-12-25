@@ -46,7 +46,7 @@ namespace AbstractFactory.Tests
                 yield return new Action<Delta1Feed>[] { feed => feed.CurrentPrice = -10 };
                 yield return new Action<Delta1Feed>[] { feed => feed.CurrentPrice = 12.3444M };
                 yield return new Action<Delta1Feed>[] { feed => feed.Isin = "U9311421039" };
-                yield return new Action<Delta1Feed>[] { feed => feed.Isin = "US9311421039" };
+                yield return new Action<Delta1Feed>[] { feed => feed.Isin = "Us9311421039" };
                 yield return new Action<Delta1Feed>[] { feed =>
                 {
                     feed.MaturityDate = DateTime.Now.AddDays(-1);

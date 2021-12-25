@@ -1,5 +1,4 @@
 ﻿using FeedManager.Task2.Feeds;
-using System;
 
 namespace FeedManager.Task2.Matchers
 {
@@ -7,7 +6,7 @@ namespace FeedManager.Task2.Matchers
     {
         public bool Match(EmFeed current, EmFeed other)
         {
-            throw new NotImplementedException();
+            return (current.SourceAccountId == other.SourceAccountId) || (current.StagingId == other.StagingId);
         }
     }
 }
