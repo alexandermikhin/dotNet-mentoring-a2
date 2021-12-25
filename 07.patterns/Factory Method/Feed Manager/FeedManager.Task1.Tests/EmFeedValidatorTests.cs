@@ -46,7 +46,7 @@ namespace FeedManager.Tests.Task1.Tests
                 yield return new Action<EmFeed>[] { feed => feed.CurrentPrice = -10 };
                 yield return new Action<EmFeed>[] { feed => feed.CurrentPrice = 12.3444M };
                 yield return new Action<EmFeed>[] { feed => feed.Sedol = -3M };
-                yield return new Action<EmFeed>[] { feed => feed.Sedol = 13M };
+                yield return new Action<EmFeed>[] { feed => feed.Sedol = 130M };
                 yield return new Action<EmFeed>[] { feed => feed.AssetValue = -13M };
                 yield return new Action<EmFeed>[] { feed =>
                 {
