@@ -1,5 +1,4 @@
 ﻿using FeedManager.Task2.Feeds;
-using System;
 
 namespace FeedManager.Task2.Matchers
 {
@@ -7,7 +6,8 @@ namespace FeedManager.Task2.Matchers
     {
         public bool Match(Delta1Feed current, Delta1Feed other)
         {
-            throw new NotImplementedException();
+            return (current.CounterpartyId + current.PrincipalId) ==
+                (other.CounterpartyId + other.PrincipalId);
         }
     }
 }

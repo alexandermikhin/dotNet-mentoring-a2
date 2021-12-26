@@ -1,22 +1,13 @@
 ﻿using FeedManager.Task2.Database;
 using FeedManager.Task2.Feeds;
-using System;
-using System.Collections.Generic;
+using FeedManager.Task3.Factories;
 
 namespace FeedManager.Task2.Importers
 {
-    public class EmFeedImporter
+    public class EmFeedImporter : BaseFeedImporter<EmFeed>
     {
-        private readonly IDatabaseRepository database;
-
-        public EmFeedImporter(IDatabaseRepository database)
+        public EmFeedImporter(IDatabaseRepository database) : base(database, new EmFeedFactory())
         {
-            this.database = database;
-        }
-
-        public void Import(IEnumerable<EmFeed> feeds)
-        {
-            throw new NotImplementedException();
         }
     }
 }

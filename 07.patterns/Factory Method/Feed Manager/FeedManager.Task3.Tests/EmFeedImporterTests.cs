@@ -96,7 +96,14 @@ namespace FeedManager.Task3.Tests
             return new EmFeed
             {
                 SourceAccountId = feed.SourceAccountId + 1,
-                StagingId = feed.StagingId + 1
+                StagingId = feed.StagingId + 1,
+                CounterpartyId = feed.CounterpartyId,
+                PrincipalId = feed.PrincipalId,
+                CurrentPrice = feed.CurrentPrice,
+                Sedol = feed.Sedol,
+                AssetValue = feed.AssetValue,
+                SourceTradeRef = feed.SourceTradeRef,
+                ValuationDate = feed.ValuationDate
             };
         }
 

@@ -97,7 +97,13 @@ namespace FeedManager.Task3.Tests
             {
                 CounterpartyId = feed.CounterpartyId + 1,
                 PrincipalId = feed.PrincipalId + 1,
-                CurrentPrice = feed.CurrentPrice + 2
+                CurrentPrice = feed.CurrentPrice + 2,
+                SourceAccountId = feed.SourceAccountId,
+                StagingId = feed.StagingId,
+                Isin = feed.Isin,
+                MaturityDate = feed.MaturityDate,
+                SourceTradeRef = feed.SourceTradeRef,
+                ValuationDate = feed.ValuationDate
             };
         }
 

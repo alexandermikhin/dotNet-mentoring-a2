@@ -1,22 +1,13 @@
 ﻿using FeedManager.Task2.Database;
 using FeedManager.Task2.Feeds;
-using System;
-using System.Collections.Generic;
+using FeedManager.Task3.Factories;
 
 namespace FeedManager.Task2.Importers
 {
-    public class Delta1FeedImporter
+    public class Delta1FeedImporter : BaseFeedImporter<Delta1Feed>
     {
-        private readonly IDatabaseRepository database;
-
-        public Delta1FeedImporter(IDatabaseRepository database)
+        public Delta1FeedImporter(IDatabaseRepository database) : base(database, new Delta1FeedFactory())
         {
-            this.database = database;
-        }
-
-        public void Import(IEnumerable<Delta1Feed> feeds)
-        {
-            throw new NotImplementedException();
         }
     }
 }
