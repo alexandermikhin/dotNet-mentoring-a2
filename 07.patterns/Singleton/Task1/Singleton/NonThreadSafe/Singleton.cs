@@ -4,12 +4,20 @@ namespace Singleton.NonThreadSafe
 {
     public class Singleton
     {
+        static Singleton instance;
+
+        Singleton() { }
+
         public static Singleton Instance
         {
             get
             {
-                // TODO: Return single instance, no thread safe
-                throw new NotImplementedException();
+                if (instance == null)
+                {
+                    instance = new Singleton();
+                }
+
+                return instance;
             }
         }
     }
